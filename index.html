@@ -242,7 +242,7 @@
         <div id="delay-phase" class="hidden">
             <h2>Break Time</h2>
             <div class="waiting-message">
-                Please take a 20-minute break. You can close this window and return, or wait here. The test will continue automatically.
+                Please take a 20-minute break. You can wait here or go do something else. Please remember to leave this window open. The test will continue automatically after the timer ends.
             </div>
             <div class="timer" id="delay-timer">20:00</div>
             <button class="btn" onclick="skipDelay()">Skip Delay (For Testing)</button>
@@ -260,12 +260,12 @@
     <script>
         // Word database - easily expandable
         const WORD_DATABASE = {
-            animals: ['dog', 'cat', 'elephant', 'tiger', 'rabbit', 'horse', 'lion', 'bear'],
-            tools: ['hammer', 'screwdriver', 'wrench', 'saw', 'drill', 'pliers', 'chisel', 'axe'],
+            animal: ['dog', 'cat', 'elephant', 'tiger', 'rabbit', 'horse', 'lion', 'bear'],
+            tool: ['hammer', 'screwdriver', 'wrench', 'saw', 'drill', 'pliers', 'chisel', 'axe'],
             furniture: ['chair', 'table', 'sofa', 'bed', 'desk', 'cabinet', 'shelf', 'dresser'],
             clothing: ['shirt', 'pants', 'shoes', 'hat', 'jacket', 'dress', 'socks', 'gloves'],
             food: ['apple', 'bread', 'cheese', 'chicken', 'rice', 'banana', 'pasta', 'fish'],
-            vehicles: ['car', 'truck', 'bicycle', 'motorcycle', 'bus', 'train', 'airplane', 'boat']
+            vehicle: ['car', 'truck', 'bicycle', 'motorcycle', 'bus', 'train', 'airplane', 'boat']
         };
 
         // Test state
@@ -286,27 +286,31 @@
             }
         };
 
-        function selectRandomWords() {
-            const categories = Object.keys(WORD_DATABASE);
-            const selectedWords = [];
-            
-            // Select 4 categories randomly
-            const selectedCategories = categories.sort(() => 0.5 - Math.random()).slice(0, 4);
-            
-            selectedCategories.forEach(category => {
-                // Select 4 random words from each category
-                const categoryWords = WORD_DATABASE[category].sort(() => 0.5 - Math.random()).slice(0, 4);
-                categoryWords.forEach(word => {
-                    selectedWords.push({
-                        word: word,
-                        category: category,
-                        attempts: 0
-                    });
-                });
+function selectRandomWords() {
+    const categories = Object.keys(WORD_DATABASE);
+    const selectedCategories = categories.sort(() => 0.5 - Math.random()).slice(0, 4);
+    const selectedWords = [];
+    
+    // Create 4 sets of 4 words (one from each category per set)
+    for (let set = 0; set < 4; set++) {
+        selectedCategories.forEach(category => {
+            const availableWords = WORD_DATABASE[category].filter(word => 
+                !selectedWords.some(w => w.word === word)
+            );
+            const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            selectedWords.push({
+                word: randomWord,
+                category: category,
+                set: set,
+                learned: false,
+                attempts: 0
             });
-            
-            return selectedWords.sort(() => 0.5 - Math.random());
-        }
+        });
+    }
+    
+    return selectedWords;
+}
+
 
         function startTest() {
             testState.studyWords = selectRandomWords();
@@ -328,11 +332,50 @@
             showStudyItem();
         }
 
-        function showStudyItem() {
-            const currentWord = testState.studyWords[testState.studyIndex];
-            const cueElement = document.getElementById('study-cue');
-            const gridElement = document.getElementById('study-grid');
-            const progressElement = document.getElementById('study-progress');
+function showStudyItem() {
+    const currentSet = testState.studyWords.filter(w => w.set === testState.currentSet);
+    const unlearnedInSet = currentSet.filter(w => !w.learned);
+    
+    if (unlearnedInSet.length === 0) {
+        // All words in current set learned, move to next set
+        testState.currentSet++;
+        testState.learnedInCurrentSet = 0;
+        
+        if (testState.currentSet >= 4) {
+            // All sets complete
+            testState.studyIndex = 0;
+            testState.recallTrial = 0;
+            showScreen('recall-phase');
+            startRecallPhase();
+            return;
+        }
+    }
+    
+    const targetWord = unlearnedInSet[0];
+    const cueElement = document.getElementById('study-cue');
+    const gridElement = document.getElementById('study-grid');
+    const progressElement = document.getElementById('study-progress');
+    
+    // Update progress
+    const totalLearned = testState.studyWords.filter(w => w.learned).length;
+    const progress = (totalLearned / 16) * 100;
+    progressElement.style.width = progress + '%';
+    
+    // Show cue for target word
+    cueElement.textContent = `Which one is a ${targetWord.category}?`;
+    
+    // Show current set of 4 words
+    gridElement.innerHTML = '';
+    currentSet.forEach(wordObj => {
+        const div = document.createElement('div');
+        div.className = wordObj.learned ? 'study-item correct' : 'study-item';
+        div.textContent = wordObj.word;
+        if (!wordObj.learned) {
+            div.onclick = () => selectStudyItem(wordObj.word === targetWord.word, div, wordObj);
+        }
+        gridElement.appendChild(div);
+    });
+}
             
             // Update progress
             const progress = (testState.studyIndex / testState.studyWords.length) * 100;
@@ -358,23 +401,24 @@
                 gridElement.appendChild(div);
             });
         }
-
-        function selectStudyItem(isCorrect, element) {
-            testState.studyWords[testState.studyIndex].attempts++;
-            
-            if (isCorrect) {
-                element.className = 'study-item correct';
-                setTimeout(() => {
-                    testState.studyIndex++;
-                    startStudyPhase();
-                }, 1000);
-            } else {
-                element.className = 'study-item incorrect';
-                setTimeout(() => {
-                    element.className = 'study-item';
-                }, 1000);
-            }
-        }
+function selectStudyItem(isCorrect, element, wordObj) {
+    wordObj.attempts++;
+    
+    if (isCorrect) {
+        wordObj.learned = true;
+        element.className = 'study-item correct';
+        testState.learnedInCurrentSet++;
+        
+        setTimeout(() => {
+            showStudyItem();
+        }, 1000);
+    } else {
+        element.className = 'study-item incorrect';
+        setTimeout(() => {
+            element.className = 'study-item';
+        }, 1000);
+    }
+}
 
         function startRecallPhase() {
             const titleElement = document.getElementById('recall-title');
@@ -553,6 +597,9 @@
 
         function restartTest() {
             testState = {
+                currentSet: 0,
+                currentWordInSet: 0,
+                learnedInCurrentSet: 0,
                 currentPhase: 'start',
                 studyWords: [],
                 studyIndex: 0,
