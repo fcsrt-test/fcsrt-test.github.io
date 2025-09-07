@@ -119,7 +119,8 @@ function showStudyItem() {
     // Update progress
     const totalLearned = testState.studyWords.filter(w => w.learned).length;
     const progress = (totalLearned / 16) * 100;
-    progressElement.style.width = progress + '%';
+    const progressBar = progressElement.querySelector('.progress-bar');
+    progressBar.style.width = progress + '%';
     
     // Show cue for target word
     cueElement.textContent = `Which one is ${targetWord.category === 'animal' ? 'an' : 'a'} ${targetWord.category}?`;
