@@ -85,8 +85,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function startTest() {
-        testState.studyWords = selectRandomWords();
-        startStudyPhase();
+    // Hide welcome screen
+    document.getElementById('welcome-screen').style.display = 'none';
+    
+    // Show test area
+    document.getElementById('test-area').style.display = 'block';
+    
+    // Initialize test
+    testState.studyWords = selectRandomWords();
+    startStudyPhase();
     }
 
     function startStudyPhase() {
@@ -116,7 +123,7 @@ function showStudyItem() {
     const gridElement = document.getElementById('study-grid');
     const progressElement = document.getElementById('study-progress');
     
-    // Update progress
+    // Update progress bar
     const totalLearned = testState.studyWords.filter(w => w.learned).length;
     const progress = (totalLearned / 16) * 100;
     const progressBar = progressElement.querySelector('.progress-bar');
@@ -137,6 +144,33 @@ function showStudyItem() {
         gridElement.appendChild(div);
     });
 }
+    
+    const targetWord = unlearnedWords[0];
+    const cueElement = document.getElementById('study-cue');
+    const gridElement = document.getElementById('study-grid');
+    const progressElement = document.getElementById('study-progress');
+    
+    // Update progress
+    const totalLearned = testState.studyWords.filter(w => w.learned).length;
+    const progress = (totalLearned / 16) * 100;
+    const progressBar = progressElement.querySelector('.progress-bar');
+    progressBar.style.width = progress + '%';
+    
+    // Show cue for target word
+    cueElement.textContent = `Which one is ${targetWord.category === 'animal' ? 'an' : 'a'} ${targetWord.category}?`;
+    
+    // Show current set of 4 words
+    gridElement.innerHTML = '';
+    currentSet.forEach(wordObj => {
+        const div = document.createElement('div');
+        div.className = wordObj.learned ? 'study-item correct' : 'study-item';
+        div.textContent = wordObj.word;
+        if (!wordObj.learned) {
+            div.onclick = () => selectStudyItem(wordObj.word === targetWord.word, div, wordObj);
+        }
+        gridElement.appendChild(div);
+    });
+
 
 function selectStudyItem(isCorrect, element, wordObj) {
     wordObj.attempts++;

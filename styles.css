@@ -81,3 +81,34 @@ body {
 #begin-test:hover {
     background: #0056b3;
 }
+
+#welcome-screen {
+    text-align: center;
+    padding: 50px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#welcome-screen h1 {
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+#welcome-screen p {
+    color: #666;
+    font-size: 18px;
+    line-height: 1.5;
+    margin-bottom: 40px;
+}
+
+#test-area {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Hide elements initially */
+.hidden {
+    display: none !important;
+}

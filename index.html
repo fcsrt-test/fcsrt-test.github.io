@@ -8,11 +8,18 @@
     <script src="script.js"></script>
 </head>
 <body>
-    <button id="begin-test">Begin Test</button>
-    <div id="study-grid"></div>
-    <div id="study-cue"></div>
-    <div id="study-progress">
-    <div class="progress-bar"></div>
-</div>
+    <div id="welcome-screen">
+        <h1>Free and Cued Selective Recall Test</h1>
+        <p>Welcome to the memory test. You will study words, then be asked to recall them multiple times. The test takes about 25-30 minutes total.</p>
+        <button id="begin-test">Begin Test</button>
+    </div>
+    
+    <div id="test-area" style="display: none;">
+        <div id="study-progress">
+            <div class="progress-bar"></div>
+        </div>
+        <div id="study-cue"></div>
+        <div id="study-grid"></div>
+    </div>
 </body>
 </html>
