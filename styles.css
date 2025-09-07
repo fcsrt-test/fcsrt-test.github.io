@@ -1,0 +1,40 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+#study-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 10px;
+}
+
+.study-item {
+    background-color: #f0f0f0;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.study-item.correct {
+    background-color: #c6efce;
+}
+
+.study-item.incorrect {
+    background-color: #ffc6c6;
+}
+
+#study-progress {
+    width: 100%;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#study-progress .progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.5s ease-in-out;
+}
