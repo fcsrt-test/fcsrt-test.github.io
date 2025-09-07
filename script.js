@@ -1,47 +1,116 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('file-input');
-    fileInput.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const workbook = XLSX.read(event.target.result, { type: 'binary' });
-            // Process the workbook here...
+let testState = {
+    currentSet: 0,
+    currentWordInSet: 0,
+    learnedInCurrentSet: 0,
+    currentPhase: 'start',
+    studyWords: [],
+    studyIndex: 0,
+    recallTrial: 0,
+    recalledWords: [],
+    cuedWords: [],
+    startTime: null,
+    results: {
+        freeRecall: [[], [], []],
+        cuedRecall: [[], [], []],
+        delayedFree: [],
+        delayedCued: [],
+        studyAttempts: []
+    }
+};
+
+let WORD_DATABASE = null;
+
+// Load word bank from JSON file
+async function loadWordBank() {
+    try {
+        const response = await fetch('words.json');
+        WORD_DATABASE = await response.json();
+        console.log('Word bank loaded successfully');
+    } catch (error) {
+        console.error('Failed to load word bank:', error);
+        // Fallback word bank in case JSON fails to load
+        WORD_DATABASE = {
+            animal: ['dog', 'cat', 'elephant', 'tiger'],
+            tool: ['hammer', 'screwdriver', 'wrench', 'saw'],
+            furniture: ['chair', 'table', 'sofa', 'bed'],
+            clothing: ['shirt', 'pants', 'shoes', 'hat']
         };
-        reader.readAsBinaryString(file);
-    });
-});
+    }
+}
 
-document.addEventListener('DOMContentLoaded', function (){
-    const beginTestButton = document.getElementById('begin-test');
-    const studyGrid = document.getElementById('study-grid');
-    const studyProgress = document.getElementById('study-progress');
-    
-    console.log(beginTestButton); // Check the value of beginTestButton
-
-    if (beginTestButton) {
-        beginTestButton.addEventListener('click', startTest);
-    }else{
-        console.error("Element with ID 'begin-test' not found.")
+function selectRandomWords() {
+    if (!WORD_DATABASE) {
+        console.error('Word database not loaded');
+        return [];
     }
     
-       function startTest() {
-    testState.studyWords = selectRandomWords();
-    startStudyPhase();
+    const categories = Object.keys(WORD_DATABASE);
+    const selectedWords = [];
+    
+    // Create 4 sets of 4 words (one from each category per set)
+    for (let set = 0; set < 4; set++) {
+        const setWords = [];
+        categories.forEach(category => {
+            const availableWords = WORD_DATABASE[category].filter(word => 
+                !selectedWords.some(w => w.word === word)
+            );
+            const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            setWords.push({
+                word: randomWord,
+                category: category,
+                set: set,
+                learned: false,
+                attempts: 0
+            });
+        });
+        
+        // Shuffle words within the set
+        setWords.sort(() => 0.5 - Math.random());
+        selectedWords.push(...setWords);
+    }
+    
+    return selectedWords;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Load word bank first
+    await loadWordBank();
+    
+    const beginTestButton = document.getElementById('begin-test');
+    
+    if (beginTestButton) {
+        beginTestButton.addEventListener('click', startTest);
+    } else {
+        console.error("Element with ID 'begin-test' not found.");
+    }
+    
+    function startTest() {
+        testState.studyWords = selectRandomWords();
+        startStudyPhase();
     }
 
     function startStudyPhase() {
-    testState.currentSet = 0;
-    testState.learnedInCurrentSet = 0;
-    showStudyItem();
+        testState.currentSet = 0;
+        testState.learnedInCurrentSet = 0;
+        showStudyItem();
     }
-})
+});
 
-
-
-
+// Keep your existing showStudyItem and selectStudyItem functions
 function showStudyItem() {
     const currentSet = testState.studyWords.filter(w => w.set === testState.currentSet);
     const unlearnedWords = currentSet.filter(w => !w.learned);
+    
+    if (unlearnedWords.length === 0) {
+        testState.currentSet++;
+        if (testState.currentSet >= 4) {
+            console.log('Study phase complete');
+            return;
+        }
+        showStudyItem();
+        return;
+    }
+    
     const targetWord = unlearnedWords[0];
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
@@ -49,11 +118,11 @@ function showStudyItem() {
     
     // Update progress
     const totalLearned = testState.studyWords.filter(w => w.learned).length;
-    const progress = (totalLearned / (4 * 4)) * 100;
+    const progress = (totalLearned / 16) * 100;
     progressElement.style.width = progress + '%';
     
     // Show cue for target word
-    cueElement.textContent = `Which one is a ${targetWord.category}?`;
+    cueElement.textContent = `Which one is ${targetWord.category === 'animal' ? 'an' : 'a'} ${targetWord.category}?`;
     
     // Show current set of 4 words
     gridElement.innerHTML = '';
@@ -85,37 +154,4 @@ function selectStudyItem(isCorrect, element, wordObj) {
             element.className = 'study-item';
         }, 1000);
     }
-}
-
-function selectRandomWords() {
-    const xlsxFile = 'words.xlsx'; // Name of the XLSX file
-    const workbook = XLSX.readFile(xlsxFile);
-    const sheetName = workbook.SheetNames[0]; // Assume the first sheet
-    const sheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Convert to JSON
-
-    const categories = data[0]; // Category names
-    const words = [];
-
-    for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        for (let j = 0; j < row.length; j++) {
-            const word = {
-                word: row[j],
-                category: categories[j],
-                learned: false,
-                attempts: 0,
-                set: Math.floor(Math.random() * 4) // Random set
-            };
-            words.push(word);
-        }
-    }
-
-    // Shuffle the words array
-    for (let i = words.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [words[i], words[j]] = [words[j], words[i]];
-    }
-
-    return words;
 }
