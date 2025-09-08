@@ -394,24 +394,35 @@ function showNextDelayedCuedItem(notRecalled) {
     });
 }
 
-function submitDelayedCuedAnswer(targetWord, notRecalled) {
-    const answer = document.getElementById('delayed-cued-input').value.toLowerCase().trim();
+function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
+    const input = document.getElementById('delayed-cued-input').value;
+    const inputWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
-    if (answer === targetWord.word.toLowerCase()) {
-        testState.delayedCuedResults.push(targetWord.word.toLowerCase());
-        document.getElementById('delayed-cued-input').style.backgroundColor = '#d4edda';
-        setTimeout(() => {
-            testState.currentCuedIndex++;
-            showNextDelayedCuedItem(notRecalled);
-        }, 1000);
+    // Check which words from this category were correctly recalled
+    const correctWordsInCategory = [];
+    const missedWordsList = missedInCategory.map(w => w.word.toLowerCase());
+    
+    inputWords.forEach(word => {
+        if (missedWordsList.includes(word)) {
+            correctWordsInCategory.push(word);
+        }
+    });
+    
+    // Add to overall delayed cued recall results
+    testState.delayedCuedResults.push(...correctWordsInCategory);
+    
+    // Show feedback
+    const inputElement = document.getElementById('delayed-cued-input');
+    if (correctWordsInCategory.length > 0) {
+        inputElement.style.backgroundColor = '#d4edda';
     } else {
-        document.getElementById('delayed-cued-input').style.backgroundColor = '#f8d7da';
-        setTimeout(() => {
-            document.getElementById('delayed-cued-input').style.backgroundColor = '';
-            testState.currentCuedIndex++;
-            showNextDelayedCuedItem(notRecalled);
-        }, 1000);
+        inputElement.style.backgroundColor = '#f8d7da';
     }
+    
+    setTimeout(() => {
+        testState.currentCuedIndex++;
+        showNextDelayedCategoryPrompt();
+    }, 1000);
 }
 
 function finishTest() {
