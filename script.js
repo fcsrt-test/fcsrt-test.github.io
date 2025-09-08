@@ -310,8 +310,8 @@ function startDelayedRecall() {
     testArea.innerHTML = `
         <div class="recall-interface">
             <h2>Final Free Recall</h2>
-            <p>Try to remember all the words from the beginning of the test:</p>
-            <textarea id="delayed-recall-input" placeholder="Enter words separated by commas or new lines..."></textarea>
+            <p>Try to remember all the words from the beginning of the test (one word per line):</p>
+            <textarea id="delayed-recall-input" placeholder="Enter words, one per line..."></textarea>
             <button id="delayed-recall-submit">Submit</button>
         </div>
     `;
