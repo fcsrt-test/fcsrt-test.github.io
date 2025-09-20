@@ -118,6 +118,9 @@ function showStudyItem() {
         return;
     }
     
+    // Ensure study interface is displayed
+    restoreStudyInterface();
+    
     const targetWord = unlearnedWords[0];
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
@@ -143,6 +146,17 @@ function showStudyItem() {
         }
         gridElement.appendChild(div);
     });
+}
+
+function restoreStudyInterface() {
+    const testArea = document.getElementById('test-area');
+    testArea.innerHTML = `
+        <div id="study-progress">
+            <div class="progress-bar"></div>
+        </div>
+        <div id="study-cue"></div>
+        <div id="study-grid"></div>
+    `;
 }
 
 function selectStudyItem(isCorrect, element, wordObj) {
@@ -279,7 +293,14 @@ function advanceToNextSet() {
         startRecallPhase();
         return;
     }
-    // Reset learned status for next set and continue studying
+    
+    // Reset learned status for words in the next set
+    testState.studyWords.forEach(word => {
+        if (word.set === testState.currentSet) {
+            word.learned = false;
+        }
+    });
+    
     testState.learnedInCurrentSet = 0;
     showStudyItem();
 }
