@@ -350,7 +350,7 @@ function showDistractionTask() {
     testArea.innerHTML = `
         <div class="distraction-interface">
             <h2>Before Trial ${testState.recallTrial + 1}</h2>
-            <p>Please read these words aloud for 20 seconds to clear your short-term memory:</p>
+            <p>Please read these words or the timer aloud for 20 seconds:</p>
             <div id="distractor-words">
                 ${selectedWords.map(word => `<span class="distractor-word">${word}</span>`).join('')}
             </div>
@@ -369,6 +369,7 @@ function showDistractionTask() {
         if (countdown <= 0) {
             clearInterval(timer);
             showFreeRecall();
+            console.log('Distractor task complete');
         }
     }, 1000);
 }
