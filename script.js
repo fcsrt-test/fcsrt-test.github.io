@@ -312,23 +312,12 @@ function startRecallPhase() {
 }
 
 function showRecallInterface() {
-    const testArea = document.getElementById('test-area');
-    
     if (testState.recallTrial < 3) {
-        // Free recall trials
-        testArea.innerHTML = `
-            <div class="recall-interface">
-                <h2>Trial ${testState.recallTrial + 1} - Free Recall</h2>
-                <p>Type all the words you remember from the study phase:</p>
-                <textarea id="recall-input" placeholder="Enter words separated by commas or new lines..."></textarea>
-                <button id="recall-submit">Submit</button>
-                <div id="recalled-words-display"></div>
-            </div>
-        `;
-        
-        document.getElementById('recall-submit').onclick = submitFreeRecall;
+        // Show distractor task before each trial
+        showDistractionTask();
     } else {
         // Start delayed recall after a brief pause
+        const testArea = document.getElementById('test-area');
         testArea.innerHTML = `
             <div class="recall-interface">
                 <h2>Please wait...</h2>
@@ -342,7 +331,103 @@ function showRecallInterface() {
     }
 }
 
+function showDistractionTask() {
+    const testArea = document.getElementById('test-area');
+    const distractorWords = [
+        "blue", "mountain", "seven", "pencil", "flower", "ocean", "three", "window", 
+        "music", "cloud", "green", "river", "eight", "castle", "rainbow", "forest",
+        "candle", "bridge", "purple", "garden", "moon", "butterfly", "crystal", "thunder"
+    ];
+    
+    // Select 8 random distractor words
+    const selectedWords = [];
+    for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * distractorWords.length);
+        selectedWords.push(distractorWords[randomIndex]);
+        distractorWords.splice(randomIndex, 1);
+    }
+    
+    testArea.innerHTML = `
+        <div class="distraction-interface">
+            <h2>Before Trial ${testState.recallTrial + 1}</h2>
+            <p>Please read these words aloud for 20 seconds to clear your short-term memory:</p>
+            <div id="distractor-words">
+                ${selectedWords.map(word => `<span class="distractor-word">${word}</span>`).join('')}
+            </div>
+            <div id="countdown-display">
+                <div id="countdown-timer">20</div>
+                <p>seconds remaining</p>
+            </div>
+        </div>
+    `;
+    
+    let countdown = 20;
+    const timer = setInterval(() => {
+        countdown--;
+        document.getElementById('countdown-timer').textContent = countdown;
+        
+        if (countdown <= 0) {
+            clearInterval(timer);
+            showFreeRecall();
+        }
+    }, 1000);
+}
+
+function showFreeRecall() {
+    const testArea = document.getElementById('test-area');
+    
+    testArea.innerHTML = `
+        <div class="recall-interface">
+            <h2>Trial ${testState.recallTrial + 1} - Free Recall</h2>
+            <p>You have 2 minutes to type all the words you remember from the study phase:</p>
+            <div id="recall-timer">
+                <div id="recall-countdown">120</div>
+                <p>seconds remaining</p>
+            </div>
+            <textarea id="recall-input" placeholder="Enter words separated by commas or new lines..."></textarea>
+            <button id="recall-submit">Submit Early</button>
+            <div id="recalled-words-display"></div>
+        </div>
+    `;
+    
+    document.getElementById('recall-submit').onclick = submitFreeRecall;
+    
+    // Start 2-minute countdown
+    let timeLeft = 120;
+    const recallTimer = setInterval(() => {
+        timeLeft--;
+        const timerElement = document.getElementById('recall-countdown');
+        if (timerElement) {
+            timerElement.textContent = timeLeft;
+            
+            // Change color as time runs low
+            if (timeLeft <= 30) {
+                timerElement.style.color = '#e74c3c';
+            } else if (timeLeft <= 60) {
+                timerElement.style.color = '#f39c12';
+            }
+        }
+        
+        if (timeLeft <= 0) {
+            clearInterval(recallTimer);
+            // Auto-submit when time runs out
+            if (document.getElementById('recall-input')) {
+                submitFreeRecall();
+            }
+        }
+    }, 1000);
+    
+    // Store timer reference so we can clear it if they submit early
+    testState.currentTimer = recallTimer;
+}
+
 function submitFreeRecall() {
+    // Clear the timer if it exists
+    if (testState.currentTimer) {
+        clearInterval(testState.currentTimer);
+        testState.currentTimer = null;
+    }
+    
     const input = document.getElementById('recall-input').value;
     const recalledWords = input.toLowerCase().split(/[,\n]/).map(w => w.trim()).filter(w => w);
     
@@ -431,13 +516,29 @@ function submitCuedAnswer(targetWord, notRecalled) {
             showNextCuedItem(notRecalled);
         }, 1000);
     } else {
-        document.getElementById('cued-input').style.backgroundColor = '#f8d7da';
-        setTimeout(() => {
-            document.getElementById('cued-input').style.backgroundColor = '';
-            testState.currentCuedIndex++;
-            showNextCuedItem(notRecalled);
-        }, 1000);
+        // Failed to recall with cue - show reminder (like in study phase)
+        showCuedRecallReminder(targetWord, notRecalled);
     }
+}
+
+function showCuedRecallReminder(targetWord, notRecalled) {
+    const container = document.getElementById('cued-recall-container');
+    
+    container.innerHTML = `
+        <div class="cued-item reminder-item">
+            <h3>Reminder</h3>
+            <p>The <strong>${targetWord.category}</strong> was <strong>${targetWord.word}</strong></p>
+            <button id="reminder-continue">Continue</button>
+        </div>
+    `;
+    
+    document.getElementById('reminder-continue').onclick = () => {
+        // Add to successful recall list after reminder
+        testState.cuedRecallResults.push(targetWord.word.toLowerCase());
+        // Continue with next word
+        testState.currentCuedIndex++;
+        showNextCuedItem(notRecalled);
+    };
 }
 
 function startDelayedRecall() {
