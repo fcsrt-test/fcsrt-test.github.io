@@ -9,14 +9,12 @@ let testState = {
     recalledWords: [],
     cuedWords: [],
     startTime: null,
-    immediateRecallAttempt: 0,
     results: {
         freeRecall: [[], [], []],
         cuedRecall: [[], [], []],
         delayedFree: [],
         delayedCued: [],
-        studyAttempts: [],
-        immediateRecall: [[], [], [], []] // Track immediate recall for each set
+        studyAttempts: []
     }
 };
 
@@ -98,6 +96,10 @@ function startTest() {
     // Initialize test
     testState.studyWords = selectRandomWords();
     testState.startTime = new Date();
+    
+    // Show dev controls
+    createDevControls();
+    
     startStudyPhase();
 }
 
@@ -113,13 +115,16 @@ function showStudyItem() {
     const unlearnedWords = currentSet.filter(w => !w.learned);
     
     if (unlearnedWords.length === 0) {
-        // All items in current set learned, test immediate recall
-        testImmediateRecall();
+        testState.currentSet++;
+        if (testState.currentSet >= 4) {
+            console.log('Study phase complete');
+            // Transition to recall phase
+            startRecallPhase();
+            return;
+        }
+        showStudyItem();
         return;
     }
-    
-    // Ensure study interface is displayed
-    restoreStudyInterface();
     
     const targetWord = unlearnedWords[0];
     const cueElement = document.getElementById('study-cue');
@@ -148,17 +153,6 @@ function showStudyItem() {
     });
 }
 
-function restoreStudyInterface() {
-    const testArea = document.getElementById('test-area');
-    testArea.innerHTML = `
-        <div id="study-progress">
-            <div class="progress-bar"></div>
-        </div>
-        <div id="study-cue"></div>
-        <div id="study-grid"></div>
-    `;
-}
-
 function selectStudyItem(isCorrect, element, wordObj) {
     wordObj.attempts++;
     
@@ -169,158 +163,15 @@ function selectStudyItem(isCorrect, element, wordObj) {
         
         setTimeout(() => {
             showStudyItem();
+            updateDevControls(); // Update dev controls after each word learned
         }, 1000);
     } else {
         element.className = 'study-item incorrect';
         setTimeout(() => {
             element.className = 'study-item';
+            updateDevControls(); // Update dev controls after each attempt
         }, 1000);
     }
-}
-
-// New function to test immediate recall after each set
-function testImmediateRecall() {
-    testState.immediateRecallAttempt = 0;
-    const currentSet = testState.studyWords.filter(w => w.set === testState.currentSet);
-    
-    const testArea = document.getElementById('test-area');
-    testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Immediate Recall - Set ${testState.currentSet + 1}</h2>
-            <p>Now I'll give you the categories. Tell me the word that goes with each category.</p>
-            <div id="immediate-recall-container"></div>
-        </div>
-    `;
-    
-    testState.currentImmediateIndex = 0;
-    testState.immediateRecallResults = [];
-    testState.failedImmediateRecall = [];
-    showNextImmediateRecallItem(currentSet);
-}
-
-function showNextImmediateRecallItem(currentSet) {
-    if (testState.currentImmediateIndex >= currentSet.length) {
-        // Finished testing all items in set
-        if (testState.failedImmediateRecall.length > 0) {
-            // Show remedial learning for failed items
-            showRemedialLearning();
-        } else {
-            // All items recalled, move to next set or main recall phase
-            testState.results.immediateRecall[testState.currentSet] = testState.immediateRecallResults;
-            advanceToNextSet();
-        }
-        return;
-    }
-    
-    const currentWord = currentSet[testState.currentImmediateIndex];
-    const missedWords = currentSet.filter(w => w.category === currentWord.category && !testState.immediateRecallResults.includes(w.word.toLowerCase()));
-    const numSlots = missedWords.length;
-    
-    const container = document.getElementById('immediate-recall-container');
-    
-    container.innerHTML = `
-        <div class="cued-item">
-            <p>What was the <strong>${currentWord.category}</strong>?</p>
-            <div id="immediate-cued-slots"></div>
-            <button id="immediate-submit">Submit</button>
-        </div>
-    `;
-    
-    const slotsContainer = document.getElementById('immediate-cued-slots');
-    
-    // Generate input slots dynamically
-    for (let i = 0; i < numSlots; i++) {
-        const slot = document.createElement('input');
-        slot.type = 'text';
-        slot.id = `immediate-cued-slot-${i}`;
-        slotsContainer.appendChild(slot);
-    }
-    
-    document.getElementById('immediate-submit').onclick = () => submitImmediateAnswer(currentWord, currentSet);
-    
-    // Allow Enter key to submit
-    document.getElementById('immediate-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            submitImmediateAnswer(currentWord, currentSet);
-        }
-    });
-    
-    testState.currentImmediateIndex++;
-}
-
-function submitImmediateAnswer(targetWord, currentSet) {
-    const answer = document.getElementById('immediate-input').value.toLowerCase().trim();
-    
-    if (answer === targetWord.word.toLowerCase()) {
-        testState.immediateRecallResults.push(targetWord.word.toLowerCase());
-        document.getElementById('immediate-input').style.backgroundColor = '#d4edda';
-        setTimeout(() => {
-            testState.currentImmediateIndex++;
-            showNextImmediateRecallItem(currentSet);
-        }, 1000);
-    } else {
-        // Failed to recall - add to remedial learning list
-        testState.failedImmediateRecall.push(targetWord);
-        document.getElementById('immediate-input').style.backgroundColor = '#f8d7da';
-        showRemedialLearning(); // Call the showRemedialLearning function here
-    }
-}
-
-function showRemedialLearning() {
-    if (testState.failedImmediateRecall.length === 0) {
-        testState.results.immediateRecall[testState.currentSet] = testState.immediateRecallResults;
-        advanceToNextSet();
-        return;
-    }
-    
-    const failedWord = testState.failedImmediateRecall[0];
-    const testArea = document.getElementById('test-area');
-    
-    testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Reminder</h2>
-            <div class="remedial-item">
-                <p>The <strong>${failedWord.category}</strong> was <strong>${failedWord.word}</strong></p>
-                <button id="remedial-continue">Continue</button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('remedial-continue').onclick = () => {
-        // Remove the shown word from failed list
-        testState.failedImmediateRecall.shift();
-        // Add to successfully recalled list
-        testState.immediateRecallResults.push(failedWord.word.toLowerCase());
-        
-        // Loop through remaining words in current set
-        const remainingWords = testState.studyWords.filter(w => w.set === testState.currentSet && !w.learned);
-        if (remainingWords.length > 0) {
-            showNextImmediateRecallItem(remainingWords);
-        } else {
-            // All items in current set learned, test immediate recall
-            testImmediateRecall();
-        }
-    };
-}
-
-function advanceToNextSet() {
-    testState.currentSet++;
-    if (testState.currentSet >= 4) {
-        console.log('Study phase complete');
-        // Transition to main recall phase
-        startRecallPhase();
-        return;
-    }
-    
-    // Reset learned status for words in the next set
-    testState.studyWords.forEach(word => {
-        if (word.set === testState.currentSet) {
-            word.learned = false;
-        }
-    });
-    
-    testState.learnedInCurrentSet = 0;
-    showStudyItem();
 }
 
 function startRecallPhase() {
@@ -330,12 +181,23 @@ function startRecallPhase() {
 }
 
 function showRecallInterface() {
+    const testArea = document.getElementById('test-area');
+    
     if (testState.recallTrial < 3) {
-        // Show distractor task before each trial
-        showDistractionTask();
+        // Free recall trials
+        testArea.innerHTML = `
+            <div class="recall-interface">
+                <h2>Trial ${testState.recallTrial + 1} - Free Recall</h2>
+                <p>Type all the words you remember from the study phase (one word per line):</p>
+                <textarea id="recall-input" placeholder="Enter words, one per line..."></textarea>
+                <button id="recall-submit">Submit</button>
+                <div id="recalled-words-display"></div>
+            </div>
+        `;
+        
+        document.getElementById('recall-submit').onclick = submitFreeRecall;
     } else {
         // Start delayed recall after a brief pause
-        const testArea = document.getElementById('test-area');
         testArea.innerHTML = `
             <div class="recall-interface">
                 <h2>Please wait...</h2>
@@ -349,106 +211,9 @@ function showRecallInterface() {
     }
 }
 
-function showDistractionTask() {
-    const testArea = document.getElementById('test-area');
-    const distractorWords = [
-        "blue", "mountain", "seven", "pencil", "flower", "ocean", "three", "window", 
-        "music", "cloud", "green", "river", "eight", "castle", "rainbow", "forest",
-        "candle", "bridge", "purple", "garden", "moon", "butterfly", "crystal", "thunder"
-    ];
-    
-    // Select 8 random distractor words
-    const selectedWords = [];
-    for (let i = 0; i < 8; i++) {
-        const randomIndex = Math.floor(Math.random() * distractorWords.length);
-        selectedWords.push(distractorWords[randomIndex]);
-        distractorWords.splice(randomIndex, 1);
-    }
-    
-    testArea.innerHTML = `
-        <div class="distraction-interface">
-            <h2>Before Trial ${testState.recallTrial + 1}</h2>
-            <p>Please read these words or the timer aloud for 20 seconds:</p>
-            <div id="distractor-words">
-                ${selectedWords.map(word => `<span class="distractor-word">${word}</span>`).join('')}
-            </div>
-            <div id="countdown-display">
-                <div id="countdown-timer">20</div>
-                <p>seconds remaining</p>
-            </div>
-        </div>
-    `;
-    
-    let countdown = 20;
-    const timer = setInterval(() => {
-        countdown--;
-        document.getElementById('countdown-timer').textContent = countdown;
-        
-        if (countdown <= 0) {
-            clearInterval(timer);
-            showFreeRecall();
-            console.log('Distractor task complete');
-        }
-    }, 1000);
-}
-
-function showFreeRecall() {
-    const testArea = document.getElementById('test-area');
-    
-    testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Trial ${testState.recallTrial + 1} - Free Recall</h2>
-            <p>You have 2 minutes to type all the words you remember from the study phase:</p>
-            <div id="recall-timer">
-                <div id="recall-countdown">120</div>
-                <p>seconds remaining</p>
-            </div>
-            <textarea id="recall-input" placeholder="Enter words separated by commas or new lines..."></textarea>
-            <button id="recall-submit">Submit Early</button>
-            <div id="recalled-words-display"></div>
-        </div>
-    `;
-    
-    document.getElementById('recall-submit').onclick = submitFreeRecall;
-    
-    // Start 2-minute countdown
-    let timeLeft = 120;
-    const recallTimer = setInterval(() => {
-        timeLeft--;
-        const timerElement = document.getElementById('recall-countdown');
-        if (timerElement) {
-            timerElement.textContent = timeLeft;
-            
-            // Change color as time runs low
-            if (timeLeft <= 30) {
-                timerElement.style.color = '#e74c3c';
-            } else if (timeLeft <= 60) {
-                timerElement.style.color = '#f39c12';
-            }
-        }
-        
-        if (timeLeft <= 0) {
-            clearInterval(recallTimer);
-            // Auto-submit when time runs out
-            if (document.getElementById('recall-input')) {
-                submitFreeRecall();
-            }
-        }
-    }, 1000);
-    
-    // Store timer reference so we can clear it if they submit early
-    testState.currentTimer = recallTimer;
-}
-
 function submitFreeRecall() {
-    // Clear the timer if it exists
-    if (testState.currentTimer) {
-        clearInterval(testState.currentTimer);
-        testState.currentTimer = null;
-    }
-    
     const input = document.getElementById('recall-input').value;
-    const recalledWords = input.toLowerCase().split(/[,\n]/).map(w => w.trim()).filter(w => w);
+    const recalledWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
     // Check which words were correctly recalled
     const correctWords = [];
@@ -480,84 +245,91 @@ function showCuedRecall() {
         return;
     }
     
+    // Group missed words by category
+    const missedByCategory = {};
+    notRecalled.forEach(wordObj => {
+        if (!missedByCategory[wordObj.category]) {
+            missedByCategory[wordObj.category] = [];
+        }
+        missedByCategory[wordObj.category].push(wordObj);
+    });
+    
     testArea.innerHTML = `
         <div class="recall-interface">
             <h2>Trial ${testState.recallTrial + 1} - Cued Recall</h2>
-            <p>For the remaining categories, try to recall the word:</p>
+            <p>For each category, try to recall any words you remember:</p>
             <div id="cued-recall-container"></div>
-            <button id="cued-recall-done" style="display: none;">Continue</button>
         </div>
     `;
     
+    const categories = Object.keys(missedByCategory);
     testState.currentCuedIndex = 0;
     testState.cuedRecallResults = [];
-    showNextCuedItem(notRecalled);
+    testState.missedByCategory = missedByCategory;
+    testState.categoriesWithMissedWords = categories;
+    showNextCategoryPrompt();
 }
 
-function showNextCuedItem(notRecalled) {
-    if (testState.currentCuedIndex >= notRecalled.length) {
+function showNextCategoryPrompt() {
+    if (testState.currentCuedIndex >= testState.categoriesWithMissedWords.length) {
         testState.results.cuedRecall[testState.recallTrial] = testState.cuedRecallResults;
         testState.recallTrial++;
         showRecallInterface();
         return;
     }
     
-    const currentWord = notRecalled[testState.currentCuedIndex];
+    const currentCategory = testState.categoriesWithMissedWords[testState.currentCuedIndex];
+    const missedInCategory = testState.missedByCategory[currentCategory];
     const container = document.getElementById('cued-recall-container');
     
     container.innerHTML = `
         <div class="cued-item">
-            <p>What was the <strong>${currentWord.category}</strong>?</p>
-            <input type="text" id="cued-input" placeholder="Enter your answer...">
+            <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <textarea id="cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
             <button id="cued-submit">Submit</button>
         </div>
     `;
     
     document.getElementById('cued-input').focus();
-    document.getElementById('cued-submit').onclick = () => submitCuedAnswer(currentWord, notRecalled);
+    document.getElementById('cued-submit').onclick = () => submitCategoryAnswer(currentCategory, missedInCategory);
     
-    // Allow Enter key to submit
+    // Allow Ctrl+Enter to submit
     document.getElementById('cued-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            submitCuedAnswer(currentWord, notRecalled);
+        if (e.key === 'Enter' && e.ctrlKey) {
+            submitCategoryAnswer(currentCategory, missedInCategory);
         }
     });
 }
 
-function submitCuedAnswer(targetWord, notRecalled) {
-    const answer = document.getElementById('cued-input').value.toLowerCase().trim();
+function submitCategoryAnswer(currentCategory, missedInCategory) {
+    const input = document.getElementById('cued-input').value;
+    const inputWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
-    if (answer === targetWord.word.toLowerCase()) {
-        testState.cuedRecallResults.push(targetWord.word.toLowerCase());
-        document.getElementById('cued-input').style.backgroundColor = '#d4edda';
-        setTimeout(() => {
-            testState.currentCuedIndex++;
-            showNextCuedItem(notRecalled);
-        }, 1000);
+    // Check which words from this category were correctly recalled
+    const correctWordsInCategory = [];
+    const missedWordsList = missedInCategory.map(w => w.word.toLowerCase());
+    
+    inputWords.forEach(word => {
+        if (missedWordsList.includes(word)) {
+            correctWordsInCategory.push(word);
+        }
+    });
+    
+    // Add to overall cued recall results
+    testState.cuedRecallResults.push(...correctWordsInCategory);
+    
+    // Show feedback
+    const inputElement = document.getElementById('cued-input');
+    if (correctWordsInCategory.length > 0) {
+        inputElement.style.backgroundColor = '#d4edda';
     } else {
-        // Failed to recall with cue - show reminder (like in study phase)
-        showCuedRecallReminder(targetWord, notRecalled);
+        inputElement.style.backgroundColor = '#f8d7da';
     }
-}
-
-function showCuedRecallReminder(targetWord, notRecalled) {
-    const container = document.getElementById('cued-recall-container');
     
-    container.innerHTML = `
-        <div class="cued-item reminder-item">
-            <h3>Reminder</h3>
-            <p>The <strong>${targetWord.category}</strong> was <strong>${targetWord.word}</strong></p>
-            <button id="reminder-continue">Continue</button>
-        </div>
-    `;
-    
-    document.getElementById('reminder-continue').onclick = () => {
-        // Add to successful recall list after reminder
-        testState.cuedRecallResults.push(targetWord.word.toLowerCase());
-        // Continue with next word
+    setTimeout(() => {
         testState.currentCuedIndex++;
-        showNextCuedItem(notRecalled);
-    };
+        showNextCategoryPrompt();
+    }, 1000);
 }
 
 function startDelayedRecall() {
@@ -567,8 +339,8 @@ function startDelayedRecall() {
     testArea.innerHTML = `
         <div class="recall-interface">
             <h2>Final Free Recall</h2>
-            <p>Try to remember all the words from the beginning of the test:</p>
-            <textarea id="delayed-recall-input" placeholder="Enter words separated by commas or new lines..."></textarea>
+            <p>Try to remember all the words from the beginning of the test (one word per line):</p>
+            <textarea id="delayed-recall-input" placeholder="Enter words, one per line..."></textarea>
             <button id="delayed-recall-submit">Submit</button>
         </div>
     `;
@@ -578,7 +350,7 @@ function startDelayedRecall() {
 
 function submitDelayedFreeRecall() {
     const input = document.getElementById('delayed-recall-input').value;
-    const recalledWords = input.toLowerCase().split(/[,\n]/).map(w => w.trim()).filter(w => w);
+    const recalledWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
     // Check which words were correctly recalled
     const correctWords = [];
@@ -609,78 +381,90 @@ function showDelayedCuedRecall() {
         return;
     }
     
+    // Group missed words by category
+    const missedByCategory = {};
+    notRecalled.forEach(wordObj => {
+        if (!missedByCategory[wordObj.category]) {
+            missedByCategory[wordObj.category] = [];
+        }
+        missedByCategory[wordObj.category].push(wordObj);
+    });
+    
     testArea.innerHTML = `
         <div class="recall-interface">
             <h2>Final Cued Recall</h2>
-            <p>For the remaining categories, try to recall the word:</p>
+            <p>For each category, try to recall any remaining words:</p>
             <div id="delayed-cued-container"></div>
         </div>
     `;
     
+    const categories = Object.keys(missedByCategory);
     testState.currentCuedIndex = 0;
     testState.delayedCuedResults = [];
-    showNextDelayedCuedItem(notRecalled);
+    testState.delayedMissedByCategory = missedByCategory;
+    testState.delayedCategoriesWithMissedWords = categories;
+    showNextDelayedCategoryPrompt();
 }
 
-function showNextDelayedCuedItem(notRecalled) {
-    if (testState.currentCuedIndex >= notRecalled.length) {
+function showNextDelayedCategoryPrompt() {
+    if (testState.currentCuedIndex >= testState.delayedCategoriesWithMissedWords.length) {
         testState.results.delayedCued = testState.delayedCuedResults;
         finishTest();
         return;
     }
     
-    const currentWord = notRecalled[testState.currentCuedIndex];
-    const missedWords = notRecalled.filter(w => w.category === currentWord.category && !testState.delayedCuedResults.includes(w.word.toLowerCase()));
-    const numSlots = missedWords.length;
-    
+    const currentCategory = testState.delayedCategoriesWithMissedWords[testState.currentCuedIndex];
+    const missedInCategory = testState.delayedMissedByCategory[currentCategory];
     const container = document.getElementById('delayed-cued-container');
     
     container.innerHTML = `
         <div class="cued-item">
-            <p>What were the <strong>${currentWord.category}</strong>?</p>
-            <div id="delayed-cued-slots"></div>
+            <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <textarea id="delayed-cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
             <button id="delayed-cued-submit">Submit</button>
         </div>
     `;
     
-    const slotsContainer = document.getElementById('delayed-cued-slots');
+    document.getElementById('delayed-cued-input').focus();
+    document.getElementById('delayed-cued-submit').onclick = () => submitDelayedCategoryAnswer(currentCategory, missedInCategory);
     
-    // Generate input slots dynamically
-    for (let i = 0; i < numSlots; i++) {
-        const slot = document.createElement('input');
-        slot.type = 'text';
-        slot.id = `delayed-cued-slot-${i}`;
-        slotsContainer.appendChild(slot);
-    }
-    
-    document.getElementById('delayed-cued-submit').onclick = () => submitDelayedCuedAnswer(currentWord, notRecalled);
-    
-    // Allow Enter key to submit
+    // Allow Ctrl+Enter to submit
     document.getElementById('delayed-cued-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            submitDelayedCuedAnswer(currentWord, notRecalled);
+        if (e.key === 'Enter' && e.ctrlKey) {
+            submitDelayedCategoryAnswer(currentCategory, missedInCategory);
         }
     });
 }
 
-function submitDelayedCuedAnswer(targetWord, notRecalled) {
-    const answer = document.getElementById('delayed-cued-input').value.toLowerCase().trim();
+function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
+    const input = document.getElementById('delayed-cued-input').value;
+    const inputWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
-    if (answer === targetWord.word.toLowerCase()) {
-        testState.delayedCuedResults.push(targetWord.word.toLowerCase());
-        document.getElementById('delayed-cued-input').style.backgroundColor = '#d4edda';
-        setTimeout(() => {
-            testState.currentCuedIndex++;
-            showNextDelayedCuedItem(notRecalled);
-        }, 1000);
+    // Check which words from this category were correctly recalled
+    const correctWordsInCategory = [];
+    const missedWordsList = missedInCategory.map(w => w.word.toLowerCase());
+    
+    inputWords.forEach(word => {
+        if (missedWordsList.includes(word)) {
+            correctWordsInCategory.push(word);
+        }
+    });
+    
+    // Add to overall delayed cued recall results
+    testState.delayedCuedResults.push(...correctWordsInCategory);
+    
+    // Show feedback
+    const inputElement = document.getElementById('delayed-cued-input');
+    if (correctWordsInCategory.length > 0) {
+        inputElement.style.backgroundColor = '#d4edda';
     } else {
-        document.getElementById('delayed-cued-input').style.backgroundColor = '#f8d7da';
-        setTimeout(() => {
-            document.getElementById('delayed-cued-input').style.backgroundColor = '';
-            testState.currentCuedIndex++;
-            showNextDelayedCuedItem(notRecalled);
-        }, 1000);
+        inputElement.style.backgroundColor = '#f8d7da';
     }
+    
+    setTimeout(() => {
+        testState.currentCuedIndex++;
+        showNextDelayedCategoryPrompt();
+    }, 1000);
 }
 
 function finishTest() {
@@ -730,7 +514,6 @@ function downloadResults() {
         testDate: new Date().toISOString(),
         duration: Math.round((new Date() - testState.startTime) / 1000 / 60),
         studyWords: testState.studyWords,
-        immediateRecall: testState.results.immediateRecall,
         freeRecallTrials: testState.results.freeRecall,
         cuedRecallTrials: testState.results.cuedRecall,
         delayedFreeRecall: testState.results.delayedFree,
@@ -746,4 +529,133 @@ function downloadResults() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+// Dev Controls Functions
+function createDevControls() {
+    if (document.getElementById('dev-controls')) return; // Prevent duplicate creation
+    
+    const devPanel = document.createElement('div');
+    devPanel.id = 'dev-controls';
+    devPanel.innerHTML = `
+        <div class="dev-header">
+            <h3>🔧 Dev Controls (Alpha)</h3>
+            <button id="toggle-dev" class="dev-btn-small">−</button>
+        </div>
+        <div class="dev-content">
+            <div class="dev-section">
+                <h4>Test Words</h4>
+                <div id="dev-words-list"></div>
+            </div>
+            <div class="dev-section">
+                <h4>Quick Navigation</h4>
+                <button class="dev-btn" onclick="devSkipToRecall()">Skip to Recall</button>
+                <button class="dev-btn" onclick="devSkipToDelayed()">Skip to Delayed</button>
+                <button class="dev-btn" onclick="devSkipToResults()">Skip to Results</button>
+                <button class="dev-btn" onclick="devCompleteStudy()">Complete Study</button>
+            </div>
+            <div class="dev-section">
+                <h4>Current State</h4>
+                <div id="dev-status"></div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(devPanel);
+    
+    // Toggle functionality
+    document.getElementById('toggle-dev').onclick = function() {
+        const content = devPanel.querySelector('.dev-content');
+        const toggle = this;
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            toggle.textContent = '−';
+        } else {
+            content.style.display = 'none';
+            toggle.textContent = '+';
+        }
+    };
+    
+    updateDevControls();
+}
+
+function updateDevControls() {
+    const devPanel = document.getElementById('dev-controls');
+    if (!devPanel) return;
+    
+    // Update words list
+    const wordsList = devPanel.querySelector('#dev-words-list');
+    if (testState.studyWords && testState.studyWords.length > 0) {
+        const categorizedWords = {};
+        testState.studyWords.forEach(wordObj => {
+            if (!categorizedWords[wordObj.category]) {
+                categorizedWords[wordObj.category] = [];
+            }
+            categorizedWords[wordObj.category].push(wordObj);
+        });
+        
+        let wordsHTML = '';
+        Object.keys(categorizedWords).forEach(category => {
+            wordsHTML += `<div class="dev-category">
+                <strong>${category}:</strong> 
+                ${categorizedWords[category].map(w => 
+                    `<span class="dev-word ${w.learned ? 'learned' : ''}">${w.word}</span>`
+                ).join(', ')}
+            </div>`;
+        });
+        wordsList.innerHTML = wordsHTML;
+    }
+    
+    // Update status
+    const status = devPanel.querySelector('#dev-status');
+    status.innerHTML = `
+        <div><strong>Phase:</strong> ${testState.currentPhase}</div>
+        <div><strong>Set:</strong> ${testState.currentSet + 1}/4</div>
+        <div><strong>Trial:</strong> ${testState.recallTrial + 1}</div>
+        <div><strong>Learned:</strong> ${testState.studyWords ? testState.studyWords.filter(w => w.learned).length : 0}/16</div>
+    `;
+}
+
+// Dev skip functions
+function devSkipToRecall() {
+    // Complete all study phases
+    testState.studyWords.forEach(word => word.learned = true);
+    testState.currentSet = 4;
+    testState.currentPhase = 'recall';
+    testState.recallTrial = 0;
+    startRecallPhase();
+    updateDevControls();
+}
+
+function devSkipToDelayed() {
+    // Complete study and immediate recall
+    testState.studyWords.forEach(word => word.learned = true);
+    testState.currentPhase = 'delayed';
+    testState.recallTrial = 3;
+    // Fill in some dummy recall data
+    testState.results.freeRecall = [['dog', 'chair'], ['cat', 'table'], ['hammer']];
+    testState.results.cuedRecall = [['elephant'], ['saw'], []];
+    startDelayedRecall();
+    updateDevControls();
+}
+
+function devSkipToResults() {
+    // Complete everything and show results
+    testState.studyWords.forEach(word => word.learned = true);
+    testState.currentPhase = 'complete';
+    // Fill in dummy data
+    testState.results.freeRecall = [['dog', 'chair', 'hammer'], ['cat', 'table', 'saw'], ['elephant', 'shirt']];
+    testState.results.cuedRecall = [['tiger'], ['wrench'], ['pants']];
+    testState.results.delayedFree = ['dog', 'chair', 'cat'];
+    testState.results.delayedCued = ['hammer', 'tiger'];
+    finishTest();
+    updateDevControls();
+}
+
+function devCompleteStudy() {
+    // Just complete the study phase
+    testState.studyWords.forEach(word => word.learned = true);
+    testState.currentSet = 4;
+    startRecallPhase();
+    updateDevControls();
 }
