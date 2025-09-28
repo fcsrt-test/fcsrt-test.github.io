@@ -277,8 +277,15 @@ function showRemedialLearning() {
         testState.failedImmediateRecall.shift();
         // Add to successfully recalled list
         testState.immediateRecallResults.push(failedWord.word.toLowerCase());
-        // Continue with next failed word or advance
-        showRemedialLearning();
+        
+        // Loop through remaining words in current set
+        const remainingWords = testState.studyWords.filter(w => w.set === testState.currentSet && !w.learned);
+        if (remainingWords.length > 0) {
+            showNextImmediateRecallItem(remainingWords);
+        } else {
+            // All items in current set learned, test immediate recall
+            testImmediateRecall();
+        }
     };
 }
 
