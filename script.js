@@ -213,17 +213,29 @@ function showNextImmediateRecallItem(currentSet) {
     }
     
     const currentWord = currentSet[testState.currentImmediateIndex];
+    const missedWords = currentSet.filter(w => w.category === currentWord.category && !testState.immediateRecallResults.includes(w.word.toLowerCase()));
+    const numSlots = missedWords.length;
+    
     const container = document.getElementById('immediate-recall-container');
     
     container.innerHTML = `
         <div class="cued-item">
             <p>What was the <strong>${currentWord.category}</strong>?</p>
-            <input type="text" id="immediate-input" placeholder="Enter your answer...">
+            <div id="immediate-cued-slots"></div>
             <button id="immediate-submit">Submit</button>
         </div>
     `;
     
-    document.getElementById('immediate-input').focus();
+    const slotsContainer = document.getElementById('immediate-cued-slots');
+    
+    // Generate input slots dynamically
+    for (let i = 0; i < numSlots; i++) {
+        const slot = document.createElement('input');
+        slot.type = 'text';
+        slot.id = `immediate-cued-slot-${i}`;
+        slotsContainer.appendChild(slot);
+    }
+    
     document.getElementById('immediate-submit').onclick = () => submitImmediateAnswer(currentWord, currentSet);
     
     // Allow Enter key to submit
@@ -232,6 +244,8 @@ function showNextImmediateRecallItem(currentSet) {
             submitImmediateAnswer(currentWord, currentSet);
         }
     });
+    
+    testState.currentImmediateIndex++;
 }
 
 function submitImmediateAnswer(targetWord, currentSet) {
@@ -616,17 +630,29 @@ function showNextDelayedCuedItem(notRecalled) {
     }
     
     const currentWord = notRecalled[testState.currentCuedIndex];
+    const missedWords = notRecalled.filter(w => w.category === currentWord.category && !testState.delayedCuedResults.includes(w.word.toLowerCase()));
+    const numSlots = missedWords.length;
+    
     const container = document.getElementById('delayed-cued-container');
     
     container.innerHTML = `
         <div class="cued-item">
-            <p>What was the <strong>${currentWord.category}</strong>?</p>
-            <input type="text" id="delayed-cued-input" placeholder="Enter your answer...">
+            <p>What were the <strong>${currentWord.category}</strong>?</p>
+            <div id="delayed-cued-slots"></div>
             <button id="delayed-cued-submit">Submit</button>
         </div>
     `;
     
-    document.getElementById('delayed-cued-input').focus();
+    const slotsContainer = document.getElementById('delayed-cued-slots');
+    
+    // Generate input slots dynamically
+    for (let i = 0; i < numSlots; i++) {
+        const slot = document.createElement('input');
+        slot.type = 'text';
+        slot.id = `delayed-cued-slot-${i}`;
+        slotsContainer.appendChild(slot);
+    }
+    
     document.getElementById('delayed-cued-submit').onclick = () => submitDelayedCuedAnswer(currentWord, notRecalled);
     
     // Allow Enter key to submit
