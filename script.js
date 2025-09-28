@@ -248,10 +248,7 @@ function submitImmediateAnswer(targetWord, currentSet) {
         // Failed to recall - add to remedial learning list
         testState.failedImmediateRecall.push(targetWord);
         document.getElementById('immediate-input').style.backgroundColor = '#f8d7da';
-        setTimeout(() => {
-            testState.currentImmediateIndex++;
-            showNextImmediateRecallItem(currentSet);
-        }, 1000);
+        showRemedialLearning(); // Call the showRemedialLearning function here
     }
 }
 
