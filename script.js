@@ -146,19 +146,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function startTest() {
-    // Hide welcome screen
-    document.getElementById('welcome-screen').style.display = 'none';
-    
-    // Show test area
+    document.getElementById('demographics-screen').style.display = 'none';
     document.getElementById('test-area').style.display = 'block';
     
-    // Initialize test
     testState.studyWords = selectRandomWords();
     testState.startTime = new Date();
     
-    // Show dev controls
     createDevControls();
-    
     startStudyPhase();
 }
 
