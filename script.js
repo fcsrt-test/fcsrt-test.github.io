@@ -40,6 +40,41 @@ async function loadWordBank() {
     }
 }
 
+function selectRandomWords() {
+    if (!WORD_DATABASE) {
+        console.error('Word database not loaded');
+        return [];
+    }
+    
+    const categories = Object.keys(WORD_DATABASE);
+    const selectedWords = [];
+    
+    // Create 4 sets of 4 words (one from each category per set)
+    for (let set = 0; set < 4; set++) {
+        const setWords = [];
+        categories.forEach(category => {
+            const availableWords = WORD_DATABASE[category].filter(word => 
+                !selectedWords.some(w => w.word === word)
+            );
+            const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            setWords.push({
+                word: randomWord,
+                category: category,
+                set: set,
+                learned: false,
+                attempts: 0
+            });
+        });
+        
+        // Shuffle words within the set
+        setWords.sort(() => 0.5 - Math.random());
+        selectedWords.push(...setWords);
+    }
+    
+    return selectedWords;
+}
+
+
 function showDemographicsScreen() {
     document.getElementById('welcome-screen').style.display = 'none';
     document.getElementById('demographics-screen').style.display = 'block';
@@ -95,40 +130,6 @@ function handleDemographicsSubmit(e) {
     }, 2000);
 }
 
-function selectRandomWords() {
-    if (!WORD_DATABASE) {
-        console.error('Word database not loaded');
-        return [];
-    }
-    
-    const categories = Object.keys(WORD_DATABASE);
-    const selectedWords = [];
-    
-    // Create 4 sets of 4 words (one from each category per set)
-    for (let set = 0; set < 4; set++) {
-        const setWords = [];
-        categories.forEach(category => {
-            const availableWords = WORD_DATABASE[category].filter(word => 
-                !selectedWords.some(w => w.word === word)
-            );
-            const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-            setWords.push({
-                word: randomWord,
-                category: category,
-                set: set,
-                learned: false,
-                attempts: 0
-            });
-        });
-        
-        // Shuffle words within the set
-        setWords.sort(() => 0.5 - Math.random());
-        selectedWords.push(...setWords);
-    }
-    
-    return selectedWords;
-}
-
 // Initialize the test when DOM is loaded
 document.addEventListener('DOMContentLoaded', async function() {
     await loadWordBank();
@@ -137,22 +138,30 @@ document.addEventListener('DOMContentLoaded', async function() {
     const demographicsForm = document.getElementById('demographics-form');
     
     if (beginTestButton) {
-        beginTestButton.addEventListener('click', showDemographicsScreen);
+        beginTestButton.addEventListener('click', showDemographicsScreen);  // CHANGED
+    } else {
+        console.error("Element with ID 'begin-test' not found.");
     }
-
+    
     if (demographicsForm) {
-        demographicsForm.addEventListener('submit', handleDemographicsSubmit);
+        demographicsForm.addEventListener('submit', handleDemographicsSubmit);  // ADDED
     }
 });
 
 function startTest() {
+    // Hide demographics screen (not welcome screen)
     document.getElementById('demographics-screen').style.display = 'none';
+    
+    // Show test area
     document.getElementById('test-area').style.display = 'block';
     
+    // Initialize test
     testState.studyWords = selectRandomWords();
     testState.startTime = new Date();
     
+    // Show dev controls
     createDevControls();
+    
     startStudyPhase();
 }
 
