@@ -9,6 +9,8 @@ let testState = {
     recalledWords: [],
     cuedWords: [],
     startTime: null,
+    userId: null,          // ADD THIS
+    demographics: {},      // ADD THIS
     results: {
         freeRecall: [[], [], []],
         cuedRecall: [[], [], []],
@@ -72,23 +74,83 @@ function selectRandomWords() {
     return selectedWords;
 }
 
+
+function showDemographicsScreen() {
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('demographics-screen').style.display = 'block';
+}
+
+function generateUserId(initials, birthYear) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let randomStr = '';
+    for (let i = 0; i < 4; i++) {
+        randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const timeStamp = month + day;
+    
+    return `${initials.toUpperCase()}-${birthYear}-${randomStr}-${timeStamp}`;
+}
+
+function handleDemographicsSubmit(e) {
+    e.preventDefault();
+    
+    const initials = document.getElementById('initials').value.trim();
+    const birthYear = document.getElementById('birth-year').value;
+    const gender = document.getElementById('gender').value;
+    const education = document.getElementById('education').value;
+    const nativeEnglish = document.getElementById('native-english').value;
+    const priorTesting = document.getElementById('prior-testing').value;
+    
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - parseInt(birthYear);
+    
+    testState.userId = generateUserId(initials, birthYear);
+    
+    testState.demographics = {
+        userId: testState.userId,
+        initials: initials.toUpperCase(),
+        birthYear: parseInt(birthYear),
+        age: age,
+        gender: gender,
+        education: education,
+        nativeEnglish: nativeEnglish,
+        priorTesting: priorTesting,
+        testDate: new Date().toISOString()
+    };
+    
+    document.getElementById('display-user-id').textContent = testState.userId;
+    document.querySelector('.participant-id-display').style.display = 'block';
+    
+    setTimeout(() => {
+        startTest();
+    }, 2000);
+}
+
 // Initialize the test when DOM is loaded
 document.addEventListener('DOMContentLoaded', async function() {
-    // Load word bank first
     await loadWordBank();
     
     const beginTestButton = document.getElementById('begin-test');
+    const demographicsForm = document.getElementById('demographics-form');
     
     if (beginTestButton) {
-        beginTestButton.addEventListener('click', startTest);
+        beginTestButton.addEventListener('click', showDemographicsScreen);  // CHANGED
     } else {
         console.error("Element with ID 'begin-test' not found.");
+    }
+    
+    if (demographicsForm) {
+        demographicsForm.addEventListener('submit', handleDemographicsSubmit);  // ADDED
     }
 });
 
 function startTest() {
-    // Hide welcome screen
-    document.getElementById('welcome-screen').style.display = 'none';
+    // Hide demographics screen (not welcome screen)
+    document.getElementById('demographics-screen').style.display = 'none';
     
     // Show test area
     document.getElementById('test-area').style.display = 'block';
@@ -511,20 +573,28 @@ function finishTest() {
 
 function downloadResults() {
     const results = {
+        userId: testState.userId,
+        demographics: testState.demographics,
         testDate: new Date().toISOString(),
         duration: Math.round((new Date() - testState.startTime) / 1000 / 60),
         studyWords: testState.studyWords,
         freeRecallTrials: testState.results.freeRecall,
         cuedRecallTrials: testState.results.cuedRecall,
         delayedFreeRecall: testState.results.delayedFree,
-        delayedCuedRecall: testState.results.delayedCued
+        delayedCuedRecall: testState.results.delayedCued,
+        scores: {
+            freeRecallScores: testState.results.freeRecall.map(trial => trial.length),
+            totalCuedRecall: testState.results.cuedRecall.reduce((sum, trial) => sum + trial.length, 0),
+            delayedFreeScore: testState.results.delayedFree.length,
+            delayedCuedScore: testState.results.delayedCued.length
+        }
     };
     
     const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `FCSRT_results_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `FCSRT_${testState.userId}_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
