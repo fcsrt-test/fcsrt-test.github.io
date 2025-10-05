@@ -41,21 +41,8 @@ async function loadWordBank() {
 }
 
 function showDemographicsScreen() {
-    const demographicsContainer = document.getElementById('demographics-container');
-    demographicsContainer.innerHTML = `
-        <h2>Demographics</h2>
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name">
-        <label for="age">Age:</label>
-        <input type="number" id="age" name="age">
-        <label for="gender">Gender:</label>
-        <select id="gender" name="gender">
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-        </select>
-        <button id="submit-demographics">Submit</button>
-    `;
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('demographics-screen').style.display = 'block';
 }
 
 function generateUserId(initials, birthYear) {
