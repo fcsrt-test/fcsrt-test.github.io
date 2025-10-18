@@ -348,6 +348,7 @@ function showNextCategoryPrompt() {
     container.innerHTML = `
         <div class="cued-item">
             <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <div id="cued-feedback" style="margin: 5px 0; font-weight: bold;"></div>
             <textarea id="cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
             <button id="cued-submit">Submit</button>
         </div>
@@ -383,21 +384,27 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
     
     // Show feedback
     const inputElement = document.getElementById('cued-input');
+    const feedbackElement = document.getElementById('cued-feedback');
+    
+    // Compute the words that are still missed in this category (not recalled in cued recall)
+    const stillMissedWords = missedInCategory
+        .filter(w => !correctWordsInCategory.includes(w.word.toLowerCase()))
+        .map(w => w.word);
+    
     if (correctWordsInCategory.length > 0) {
+        feedbackElement.textContent = `You recalled ${correctWordsInCategory.length} word(s) correctly! The missed ${currentCategory} words were: ${stillMissedWords.join(', ')}`;
+        feedbackElement.style.color = 'green';
         inputElement.style.backgroundColor = '#d4edda';
     } else {
+        feedbackElement.textContent = `No correct words recalled. The ${currentCategory} words were: ${stillMissedWords.join(', ')}`;
+        feedbackElement.style.color = 'red';
         inputElement.style.backgroundColor = '#f8d7da';
     }
     
-    console.log('Cued missed words:', testState.cuedMissedWords);
-    console.log('Still missed this category:', stillMissed);
-
     setTimeout(() => {
         testState.currentCuedIndex++;
-        console.log('Category index:', testState.currentCuedIndex, 'Total categories:', testState.categoriesWithMissedWords.length);
-        console.log('Total cued missed words so far:', testState.cuedMissedWords);
         showNextCategoryPrompt();
-    }, 1000);
+    }, 2000);
 }
 
 function startDelayedRecall() {
@@ -488,6 +495,7 @@ function showNextDelayedCategoryPrompt() {
     container.innerHTML = `
         <div class="cued-item">
             <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <div id="delayed-cued-feedback" style="margin: 5px 0; font-weight: bold;"></div>
             <textarea id="delayed-cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
             <button id="delayed-cued-submit">Submit</button>
         </div>
@@ -523,16 +531,27 @@ function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
     
     // Show feedback
     const inputElement = document.getElementById('delayed-cued-input');
+    const feedbackElement = document.getElementById('delayed-cued-feedback');
+    
+    // Compute the words that are still missed in this category (not recalled in cued recall)
+    const stillMissedWords = missedInCategory
+        .filter(w => !correctWordsInCategory.includes(w.word.toLowerCase()))
+        .map(w => w.word);
+    
     if (correctWordsInCategory.length > 0) {
+        feedbackElement.textContent = `You recalled ${correctWordsInCategory.length} word(s) correctly! The missed ${currentCategory} words were: ${stillMissedWords.join(', ')}`;
+        feedbackElement.style.color = 'green';
         inputElement.style.backgroundColor = '#d4edda';
     } else {
+        feedbackElement.textContent = `No correct words recalled. The ${currentCategory} words were: ${stillMissedWords.join(', ')}`;
+        feedbackElement.style.color = 'red';
         inputElement.style.backgroundColor = '#f8d7da';
     }
     
     setTimeout(() => {
         testState.currentCuedIndex++;
         showNextDelayedCategoryPrompt();
-    }, 1000);
+    }, 2000);
 }
 
 function finishTest() {
