@@ -401,10 +401,19 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
         inputElement.style.backgroundColor = '#f8d7da';
     }
     
-    setTimeout(() => {
+    // Disable input and submit button
+    inputElement.disabled = true;
+    document.getElementById('cued-submit').disabled = true;
+    
+    // Create Next button
+    const nextButton = document.createElement('button');
+    nextButton.id = 'cued-next';
+    nextButton.textContent = 'Next';
+    nextButton.onclick = () => {
         testState.currentCuedIndex++;
         showNextCategoryPrompt();
-    }, 2000);
+    };
+    feedbackElement.appendChild(nextButton);
 }
 
 function startDelayedRecall() {
@@ -548,10 +557,19 @@ function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
         inputElement.style.backgroundColor = '#f8d7da';
     }
     
-    setTimeout(() => {
+    // Disable the input and submit button
+    inputElement.disabled = true;
+    document.getElementById('delayed-cued-submit').disabled = true;
+    
+    // Create and show the Next button
+    const nextButton = document.createElement('button');
+    nextButton.id = 'delayed-cued-next';
+    nextButton.textContent = 'Next';
+    nextButton.onclick = () => {
         testState.currentCuedIndex++;
         showNextDelayedCategoryPrompt();
-    }, 2000);
+    };
+    feedbackElement.appendChild(nextButton);
 }
 
 function finishTest() {
