@@ -21,6 +21,7 @@ let testState = {
 };
 
 let WORD_DATABASE = null;
+//gotta change smth
 
 // Load word bank from JSON file
 async function loadWordBank() {
