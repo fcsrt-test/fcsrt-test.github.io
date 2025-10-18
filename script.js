@@ -389,8 +389,13 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
         inputElement.style.backgroundColor = '#f8d7da';
     }
     
+    console.log('Cued missed words:', testState.cuedMissedWords);
+    console.log('Still missed this category:', stillMissed);
+
     setTimeout(() => {
         testState.currentCuedIndex++;
+        console.log('Category index:', testState.currentCuedIndex, 'Total categories:', testState.categoriesWithMissedWords.length);
+        console.log('Total cued missed words so far:', testState.cuedMissedWords);
         showNextCategoryPrompt();
     }, 1000);
 }
