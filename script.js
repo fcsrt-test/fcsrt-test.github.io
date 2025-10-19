@@ -212,7 +212,7 @@ async function handleUserIdSubmit() {
     
     try {
         // Check if user exists
-        const response = await fetch('https://script.google.com/macros/s/AKfycbw0xTCiJjrwljlSZcccxtBwUEhPG8Cqxp-OqF3HUPxJZGgbmmXvs4_IkI1W-naaf3m3/exec?action=checkUser&userId=' + encodeURIComponent(userId));
+        const response = await fetch('https://script.google.com/macros/s/AKfycbwKFpfr_FR8cr4LemaA1W-tdx6V7QYe3KZIj7UJLTJCN2r6a9iDfJmT6TBz6g8V8rcB/exec?action=checkUser&userId=' + encodeURIComponent(userId));
         const data = await response.json();
         
         if (data.exists) {
@@ -731,8 +731,8 @@ function finishTest() {
                 <p style="color: #856404;">Please do not close this page until upload is complete.</p>
             </div>
             
-            <div id="action-buttons" style="display: none;">
-                <button id="restart-test">Take Test Again</button>
+            <div id="action-buttons" style="display: none; text-align: center; margin-top: 20px;">
+                <button id="restart-test" style="background: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">Take Test Again</button>
             </div>
         </div>
     `;
@@ -807,32 +807,37 @@ function downloadResults() {
 }
 
 function uploadResults() {
-    // Prepare data for upload
+    // Prepare data for upload - stringify complex data for Apps Script
     const data = {
         userId: testState.userId,
-        ...testState.demographics,
+        initials: testState.demographics.initials,
+        birthYear: testState.demographics.birthYear,
+        age: testState.demographics.age,
+        gender: testState.demographics.gender,
+        education: testState.demographics.education,
+        nativeEnglish: testState.demographics.nativeEnglish,
         testDate: new Date().toISOString(),
         duration: Math.round((new Date() - testState.startTime) / 1000 / 60),
-        studyTimes: testState.studyTimes,
-        freeRecallTimes: testState.freeRecallTimes,
-        freeRecallResults: testState.results.freeRecall,
-        cuedRecallTimes: testState.cuedRecallTimes,
-        cuedRecallResults: testState.results.cuedRecall,
+        studyTimes: JSON.stringify(testState.studyTimes),
+        freeRecallTimes: JSON.stringify(testState.freeRecallTimes),
+        freeRecallResults: JSON.stringify(testState.results.freeRecall),
+        cuedRecallTimes: JSON.stringify(testState.cuedRecallTimes),
+        cuedRecallResults: JSON.stringify(testState.results.cuedRecall),
         delayedFreeRecallTime: testState.delayedFreeRecallTime,
-        delayedFreeResults: testState.results.delayedFree,
-        delayedCuedRecallTimes: testState.delayedCuedRecallTimes,
-        delayedCuedResults: testState.results.delayedCued,
-        wordList: testState.studyWords.map(w => ({
+        delayedFreeResults: JSON.stringify(testState.results.delayedFree),
+        delayedCuedRecallTimes: JSON.stringify(testState.delayedCuedRecallTimes),
+        delayedCuedResults: JSON.stringify(testState.results.delayedCued),
+        wordList: JSON.stringify(testState.studyWords.map(w => ({
             word: w.word,
             category: w.category,
             set: w.set,
             learned: w.learned,
             attempts: w.attempts
-        }))
+        })))
     };
     
     // Use the provided Google Apps Script URL for uploading results
-    const endpointUrl = 'https://script.google.com/macros/s/AKfycbw0xTCiJjrwljlSZcccxtBwUEhPG8Cqxp-OqF3HUPxJZGgbmmXvs4_IkI1W-naaf3m3/exec';
+    const endpointUrl = 'https://script.google.com/macros/s/AKfycbwKFpfr_FR8cr4LemaA1W-tdx6V7QYe3KZIj7UJLTJCN2r6a9iDfJmT6TBz6g8V8rcB/exec';
     
     fetch(endpointUrl, {
         method: 'POST',
@@ -844,7 +849,7 @@ function uploadResults() {
     })
     .then(response => {
         // With no-cors mode, we can't check response.ok, so we assume success
-        showUploadSuccess();
+        setTimeout(() => showUploadSuccess(), 1000);
     })
     .catch(error => {
         console.error('Upload error:', error);
