@@ -440,9 +440,23 @@ function showCuedRecall() {
     );
     
     if (notRecalled.length === 0) {
-        // All words were recalled, move to next trial
+        // All words were recalled - perfect free recall, skip cued recall
+        testState.results.cuedRecall[testState.recallTrial] = ["skip"];
+        testState.cuedRecallTimes.push(0); // No time spent on cued recall
         testState.recallTrial++;
-        showRecallInterface();
+        
+        // Show brief feedback
+        testArea.innerHTML = `
+            <div class="recall-interface">
+                <h2>Perfect Recall! ✓</h2>
+                <p>You recalled all words correctly. Cued recall is not needed.</p>
+                <p>Moving to the next trial...</p>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            showRecallInterface();
+        }, 2000);
         return;
     }
     
@@ -612,8 +626,22 @@ function showDelayedCuedRecall() {
     );
     
     if (notRecalled.length === 0) {
-        // All words were recalled, finish test
-        finishTest();
+        // All words were recalled - perfect delayed free recall, skip delayed cued recall
+        testState.results.delayedCued = ["skip"];
+        testState.delayedCuedRecallTimes = [0]; // No time spent on delayed cued recall
+        
+        // Show brief feedback
+        testArea.innerHTML = `
+            <div class="recall-interface">
+                <h2>Perfect Delayed Recall! ✓</h2>
+                <p>You recalled all words correctly. Cued recall is not needed.</p>
+                <p>Finishing test...</p>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            finishTest();
+        }, 2000);
         return;
     }
     
