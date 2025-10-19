@@ -119,7 +119,6 @@ function handleDemographicsSubmit(e) {
     const gender = document.getElementById('gender').value;
     const education = document.getElementById('education').value;
     const nativeEnglish = document.getElementById('native-english').value;
-    const priorTesting = document.getElementById('prior-testing').value;
     
     const currentYear = new Date().getFullYear();
     const age = currentYear - parseInt(birthYear);
@@ -134,16 +133,28 @@ function handleDemographicsSubmit(e) {
         gender: gender,
         education: education,
         nativeEnglish: nativeEnglish,
-        priorTesting: priorTesting,
         testDate: new Date().toISOString()
     };
     
-    document.getElementById('display-user-id').textContent = testState.userId;
-    document.querySelector('.participant-id-display').style.display = 'block';
+    // Hide the form
+    document.getElementById('demographics-form').style.display = 'none';
     
-    setTimeout(() => {
-        startTest();
-    }, 2000);
+    // Create and show user ID with Begin Test button
+    const demographicsScreen = document.getElementById('demographics-screen');
+    const messageDiv = document.createElement('div');
+    messageDiv.style.textAlign = 'center';
+    messageDiv.innerHTML = `
+        <div style="padding: 20px; background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; margin: 20px 0;">
+            <p style="font-size: 18px; margin-bottom: 10px;">Your User ID is:</p>
+            <p style="font-size: 24px; font-weight: bold; color: #27ae60; margin-bottom: 10px;">${testState.userId}</p>
+            <p style="font-size: 14px; color: #155724;">Please save this ID for future sessions.</p>
+        </div>
+        <button id="begin-test-button" style="background: #3498db; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Begin Test</button>
+    `;
+    demographicsScreen.appendChild(messageDiv);
+    
+    // Add event listener to the Begin Test button
+    document.getElementById('begin-test-button').addEventListener('click', startTest);
 }
 
 // Initialize the test when DOM is loaded
@@ -177,8 +188,70 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+function showReturningUserScreen() {
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('returning-user-screen').style.display = 'block';
+}
+
+function showUserIdScreen() {
+    document.getElementById('returning-user-screen').style.display = 'none';
+    document.getElementById('user-id-screen').style.display = 'block';
+}
+
+function showDemographicsScreen() {
+    document.getElementById('returning-user-screen').style.display = 'none';
+    document.getElementById('demographics-screen').style.display = 'block';
+}
+
+async function handleUserIdSubmit() {
+    const userId = document.getElementById('user-id-input').value.trim();
+    if (!userId) {
+        document.getElementById('user-id-message').textContent = 'Please enter your User ID';
+        return;
+    }
+    
+    try {
+        // Check if user exists
+        const response = await fetch('https://script.google.com/macros/s/AKfycbw0xTCiJjrwljlSZcccxtBwUEhPG8Cqxp-OqF3HUPxJZGgbmmXvs4_IkI1W-naaf3m3/exec?action=checkUser&userId=' + encodeURIComponent(userId));
+        const data = await response.json();
+        
+        if (data.exists) {
+            testState.userId = userId;
+            testState.demographics = data.demographics;
+            
+            // Hide user ID screen and show test area
+            document.getElementById('user-id-screen').style.display = 'none';
+            document.getElementById('test-area').style.display = 'block';
+            
+            // Show user ID in the interface if there's a display element
+            const displayElement = document.getElementById('display-user-id');
+            if (displayElement) {
+                displayElement.textContent = testState.userId;
+                const participantDisplay = document.querySelector('.participant-id-display');
+                if (participantDisplay) {
+                    participantDisplay.style.display = 'block';
+                }
+            }
+            
+            // Start the test
+            testState.studyWords = selectRandomWords();
+            testState.startTime = new Date();
+            createDevControls();
+            startStudyPhase();
+        } else {
+            document.getElementById('user-id-message').textContent = 'User ID not found. Please try again or take as a new participant.';
+        }
+    } catch (error) {
+        console.error('Error checking user ID:', error);
+        document.getElementById('user-id-message').textContent = 'Error checking user ID. Please try again.';
+    }
+}
+
 function startTest() {
-    // Hide demographics screen (not welcome screen)
+    // Hide all other screens
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('returning-user-screen').style.display = 'none';
+    document.getElementById('user-id-screen').style.display = 'none';
     document.getElementById('demographics-screen').style.display = 'none';
     
     // Show test area
