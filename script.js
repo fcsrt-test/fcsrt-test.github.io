@@ -92,14 +92,8 @@ function selectRandomWords() {
 
 
 function showDemographicsScreen() {
-    document.getElementById('returning-user-screen').style.display = 'none';
-    document.getElementById('user-id-screen').style.display = 'none';
+    document.getElementById('welcome-screen').style.display = 'none';
     document.getElementById('demographics-screen').style.display = 'block';
-    
-    // Re-attach the submit handler
-    const form = document.getElementById('demographics-form');
-    form.removeEventListener('submit', handleDemographicsSubmit); // Remove existing event listener
-    form.addEventListener('submit', handleDemographicsSubmit);
 }
 
 function generateUserId(initials, birthYear) {
@@ -158,64 +152,30 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     const beginTestButton = document.getElementById('begin-test');
     const demographicsForm = document.getElementById('demographics-form');
+    const yesReturningBtn = document.getElementById('yes-returning');
+    const noReturningBtn = document.getElementById('no-returning');
+    const submitUserIdBtn = document.getElementById('submit-user-id');
     
     if (beginTestButton) {
-        beginTestButton.addEventListener('click', showReturningUserScreen);  
-    } else {
-        console.error("Element with ID 'begin-test' not found.");
+        beginTestButton.addEventListener('click', showReturningUserScreen);
     }
     
     if (demographicsForm) {
-        demographicsForm.addEventListener('submit', handleDemographicsSubmit);  
+        demographicsForm.addEventListener('submit', handleDemographicsSubmit);
     }
     
-    // Add event listeners for returning user screen
-    document.getElementById('yes-returning').addEventListener('click', showUserIdScreen);
-    document.getElementById('no-returning').addEventListener('click', showDemographicsScreen);
-    document.getElementById('submit-user-id').addEventListener('click', handleUserIdSubmit);
+    if (yesReturningBtn) {
+        yesReturningBtn.addEventListener('click', showUserIdScreen);
+    }
+    
+    if (noReturningBtn) {
+        noReturningBtn.addEventListener('click', showDemographicsScreen);
+    }
+    
+    if (submitUserIdBtn) {
+        submitUserIdBtn.addEventListener('click', handleUserIdSubmit);
+    }
 });
-
-function showReturningUserScreen() {
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('returning-user-screen').style.display = 'block';
-}
-
-function showUserIdScreen() {
-    document.getElementById('returning-user-screen').style.display = 'none';
-    document.getElementById('user-id-screen').style.display = 'block';
-}
-
-async function handleUserIdSubmit() {
-    const userId = document.getElementById('user-id-input').value.trim();
-    if (!userId) {
-        document.getElementById('user-id-message').textContent = 'Please enter your User ID';
-        return;
-    }
-    
-    try {
-        // Check if user exists
-        const response = await fetch('https://script.google.com/macros/s/AKfycbw0xTCiJjrwljlSZcccxtBwUEhPG8Cqxp-OqF3HUPxJZGgbmmXvs4_IkI1W-naaf3m3/exec?action=checkUser&userId=' + encodeURIComponent(userId));
-        const data = await response.json();
-        
-        if (data.exists) {
-            testState.userId = userId;
-            testState.demographics = data.demographics;
-            
-            // Show user ID and proceed
-            document.getElementById('display-user-id').textContent = testState.userId;
-            document.querySelector('.participant-id-display').style.display = 'block';
-            
-            setTimeout(() => {
-                startTest();
-            }, 2000);
-        } else {
-            document.getElementById('user-id-message').textContent = 'User ID not found. Please try again or take as a new participant.';
-        }
-    } catch (error) {
-        console.error('Error checking user ID:', error);
-        document.getElementById('user-id-message').textContent = 'Error checking user ID. Please try again.';
-    }
-}
 
 function startTest() {
     // Hide demographics screen (not welcome screen)
