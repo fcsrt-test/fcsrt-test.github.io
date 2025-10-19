@@ -154,15 +154,62 @@ document.addEventListener('DOMContentLoaded', async function() {
     const demographicsForm = document.getElementById('demographics-form');
     
     if (beginTestButton) {
-        beginTestButton.addEventListener('click', showDemographicsScreen);  // CHANGED
+        beginTestButton.addEventListener('click', showReturningUserScreen);  
     } else {
         console.error("Element with ID 'begin-test' not found.");
     }
     
     if (demographicsForm) {
-        demographicsForm.addEventListener('submit', handleDemographicsSubmit);  // ADDED
+        demographicsForm.addEventListener('submit', handleDemographicsSubmit);  
     }
+    
+    // Add event listeners for returning user screen
+    document.getElementById('yes-returning').addEventListener('click', showUserIdScreen);
+    document.getElementById('no-returning').addEventListener('click', showDemographicsScreen);
+    document.getElementById('submit-user-id').addEventListener('click', handleUserIdSubmit);
 });
+
+function showReturningUserScreen() {
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('returning-user-screen').style.display = 'block';
+}
+
+function showUserIdScreen() {
+    document.getElementById('returning-user-screen').style.display = 'none';
+    document.getElementById('user-id-screen').style.display = 'block';
+}
+
+async function handleUserIdSubmit() {
+    const userId = document.getElementById('user-id-input').value.trim();
+    if (!userId) {
+        document.getElementById('user-id-message').textContent = 'Please enter your User ID';
+        return;
+    }
+    
+    try {
+        // Check if user exists
+        const response = await fetch('https://script.google.com/macros/s/AKfycbw0xTCiJjrwljlSZcccxtBwUEhPG8Cqxp-OqF3HUPxJZGgbmmXvs4_IkI1W-naaf3m3/exec?action=checkUser&userId=' + encodeURIComponent(userId));
+        const data = await response.json();
+        
+        if (data.exists) {
+            testState.userId = userId;
+            testState.demographics = data.demographics;
+            
+            // Show user ID and proceed
+            document.getElementById('display-user-id').textContent = testState.userId;
+            document.querySelector('.participant-id-display').style.display = 'block';
+            
+            setTimeout(() => {
+                startTest();
+            }, 2000);
+        } else {
+            document.getElementById('user-id-message').textContent = 'User ID not found. Please try again or take as a new participant.';
+        }
+    } catch (error) {
+        console.error('Error checking user ID:', error);
+        document.getElementById('user-id-message').textContent = 'Error checking user ID. Please try again.';
+    }
+}
 
 function startTest() {
     // Hide demographics screen (not welcome screen)
@@ -641,11 +688,13 @@ function finishTest() {
             </div>
             
             <button id="download-results">Download Detailed Results</button>
+            <button id="upload-results">Upload Results</button>
             <button id="restart-test">Take Test Again</button>
         </div>
     `;
     
     document.getElementById('download-results').onclick = downloadResults;
+    document.getElementById('upload-results').onclick = uploadResults;
     document.getElementById('restart-test').onclick = () => location.reload();
 }
 
@@ -712,6 +761,54 @@ function downloadResults() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+function uploadResults() {
+    // Prepare data for upload
+    const data = {
+        userId: testState.userId,
+        ...testState.demographics,
+        testDate: new Date().toISOString(),
+        duration: Math.round((new Date() - testState.startTime) / 1000 / 60),
+        studyTimes: testState.studyTimes,
+        freeRecallTimes: testState.freeRecallTimes,
+        freeRecallResults: testState.results.freeRecall,
+        cuedRecallTimes: testState.cuedRecallTimes,
+        cuedRecallResults: testState.results.cuedRecall,
+        delayedFreeRecallTime: testState.delayedFreeRecallTime,
+        delayedFreeResults: testState.results.delayedFree,
+        delayedCuedRecallTimes: testState.delayedCuedRecallTimes,
+        delayedCuedResults: testState.results.delayedCued,
+        wordList: testState.studyWords.map(w => ({
+            word: w.word,
+            category: w.category,
+            set: w.set,
+            learned: w.learned,
+            attempts: w.attempts
+        }))
+    };
+    
+    // Use the provided Google Apps Script URL for uploading results
+    const endpointUrl = 'https://script.google.com/macros/s/AKfycbw0xTCiJjrwljlSZcccxtBwUEhPG8Cqxp-OqF3HUPxJZGgbmmXvs4_IkI1W-naaf3m3/exec';
+    
+    fetch(endpointUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Results uploaded successfully!');
+        } else {
+            alert('Upload failed. Please download the results instead.');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        alert('Upload failed. Please download the results instead.');
+    });
 }
 
 // Dev Controls Functions
