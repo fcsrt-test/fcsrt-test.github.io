@@ -26,6 +26,14 @@ let testState = {
     delayedFreeRecallTime: null, // time for delayed free recall
     delayedCuedRecallTimes: [], // time for each delayed cued category
 
+    // Stroop test state
+    stroopStartTime: null,
+    stroopTrials: [],
+    stroopDifficulty: 1, // 1 = easy, 2 = medium, 3 = hard
+    stroopCorrect: 0,
+    stroopTotal: 0,
+    stroopEffectivenessScore: 0,
+
     results: {
         freeRecall: [[], [], []],
         cuedRecall: [[], [], []],
@@ -385,16 +393,17 @@ function showRecallInterface() {
         // Record the start time for this free recall trial
         testState.freeRecallStartTime = new Date();
     } else {
-        // Start delayed recall after a brief pause
+        // Start Stroop test as distractor task before delayed recall
         testArea.innerHTML = `
             <div class="recall-interface">
-                <h2>Please wait...</h2>
-                <p>The test will continue in a moment with the final recall phase.</p>
+                <h2>Break Time</h2>
+                <p>Before we continue, please complete a short attention task.</p>
+                <p>This helps us ensure accurate memory measurement.</p>
             </div>
         `;
         
         setTimeout(() => {
-            startDelayedRecall();
+            startStroopTest();
         }, 3000);
     }
 }
@@ -693,6 +702,247 @@ function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
     showNextDelayedCategoryPrompt();
 }
 
+// ===== STROOP TEST FUNCTIONS =====
+
+function startStroopTest() {
+    testState.stroopStartTime = new Date();
+    testState.stroopTrials = [];
+    testState.stroopCorrect = 0;
+    testState.stroopTotal = 0;
+    testState.stroopDifficulty = 1;
+    
+    const testArea = document.getElementById('test-area');
+    testArea.innerHTML = `
+        <div class="stroop-interface" style="text-align: center; padding: 40px;">
+            <h2>Attention Task</h2>
+            <p style="margin-bottom: 30px;">Click the button that matches the COLOR of the text (not the word itself).</p>
+            
+            <div id="stroop-stimulus" style="font-size: 48px; font-weight: bold; margin: 40px 0; min-height: 80px;"></div>
+            
+            <div id="stroop-buttons" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; max-width: 600px; margin: 0 auto;">
+                <button class="stroop-btn" data-color="red" style="background: #e74c3c; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">RED</button>
+                <button class="stroop-btn" data-color="blue" style="background: #3498db; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">BLUE</button>
+                <button class="stroop-btn" data-color="green" style="background: #27ae60; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">GREEN</button>
+                <button class="stroop-btn" data-color="yellow" style="background: #f1c40f; color: black; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">YELLOW</button>
+            </div>
+            
+            <div id="stroop-feedback" style="margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 30px;"></div>
+            
+            <div id="stroop-progress" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <p><strong>Progress:</strong> <span id="stroop-count">0</span> trials completed</p>
+                <p><strong>Accuracy:</strong> <span id="stroop-accuracy">0%</span></p>
+                <p style="font-size: 14px; color: #666; margin-top: 10px;">Task will complete in 3-5 minutes</p>
+            </div>
+        </div>
+    `;
+    
+    // Attach button listeners
+    document.querySelectorAll('.stroop-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => handleStroopResponse(e.target.dataset.color));
+    });
+    
+    showStroopTrial();
+}
+
+function showStroopTrial() {
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
+    const colorMap = {
+        'red': '#e74c3c',
+        'blue': '#3498db',
+        'green': '#27ae60',
+        'yellow': '#f1c40f'
+    };
+    
+    // Select word and color based on difficulty
+    let wordIndex, colorIndex;
+    
+    if (testState.stroopDifficulty === 1) {
+        // Easy: 70% congruent trials
+        if (Math.random() < 0.7) {
+            wordIndex = Math.floor(Math.random() * words.length);
+            colorIndex = wordIndex; // Congruent
+        } else {
+            wordIndex = Math.floor(Math.random() * words.length);
+            colorIndex = (wordIndex + 1 + Math.floor(Math.random() * 3)) % 4; // Incongruent
+        }
+    } else if (testState.stroopDifficulty === 2) {
+        // Medium: 50% congruent
+        wordIndex = Math.floor(Math.random() * words.length);
+        if (Math.random() < 0.5) {
+            colorIndex = wordIndex;
+        } else {
+            colorIndex = (wordIndex + 1 + Math.floor(Math.random() * 3)) % 4;
+        }
+    } else {
+        // Hard: all incongruent
+        wordIndex = Math.floor(Math.random() * words.length);
+        colorIndex = (wordIndex + 1 + Math.floor(Math.random() * 3)) % 4;
+    }
+    
+    const stimulus = document.getElementById('stroop-stimulus');
+    if (stimulus) {
+        stimulus.textContent = words[wordIndex];
+        stimulus.style.color = colorMap[colors[colorIndex]];
+        
+        // Store current trial data
+        testState.currentStroopTrial = {
+            word: words[wordIndex],
+            color: colors[colorIndex],
+            startTime: new Date(),
+            difficulty: testState.stroopDifficulty
+        };
+    }
+}
+
+function handleStroopResponse(selectedColor) {
+    if (!testState.currentStroopTrial) return;
+    
+    const trial = testState.currentStroopTrial;
+    const responseTime = new Date() - trial.startTime;
+    const correct = selectedColor === trial.color;
+    
+    // Store trial result
+    testState.stroopTrials.push({
+        word: trial.word,
+        color: trial.color,
+        response: selectedColor,
+        correct: correct,
+        responseTime: responseTime,
+        difficulty: trial.difficulty
+    });
+    
+    testState.stroopTotal++;
+    if (correct) testState.stroopCorrect++;
+    
+    // Show feedback
+    const feedback = document.getElementById('stroop-feedback');
+    if (feedback) {
+        feedback.textContent = correct ? '✓ Correct!' : '✗ Incorrect';
+        feedback.style.color = correct ? '#27ae60' : '#e74c3c';
+        
+        setTimeout(() => {
+            feedback.textContent = '';
+        }, 500);
+    }
+    
+    // Update progress
+    updateStroopProgress();
+    
+    // Check if should end test
+    const elapsedMinutes = (new Date() - testState.stroopStartTime) / 1000 / 60;
+    const shouldEnd = checkStroopCompletion(elapsedMinutes);
+    
+    if (shouldEnd) {
+        endStroopTest();
+    } else {
+        // Adjust difficulty
+        adjustStroopDifficulty();
+        
+        // Show next trial
+        setTimeout(() => showStroopTrial(), 300);
+    }
+}
+
+function updateStroopProgress() {
+    const countElem = document.getElementById('stroop-count');
+    const accuracyElem = document.getElementById('stroop-accuracy');
+    
+    if (countElem) countElem.textContent = testState.stroopTotal;
+    if (accuracyElem) {
+        const accuracy = testState.stroopTotal > 0 
+            ? Math.round((testState.stroopCorrect / testState.stroopTotal) * 100)
+            : 0;
+        accuracyElem.textContent = accuracy + '%';
+    }
+}
+
+function adjustStroopDifficulty() {
+    // Only adjust after at least 10 trials
+    if (testState.stroopTotal < 10) return;
+    
+    // Calculate recent accuracy (last 10 trials)
+    const recentTrials = testState.stroopTrials.slice(-10);
+    const recentCorrect = recentTrials.filter(t => t.correct).length;
+    const recentAccuracy = recentCorrect / recentTrials.length;
+    
+    // Target 70-80% accuracy
+    if (recentAccuracy > 0.85 && testState.stroopDifficulty < 3) {
+        testState.stroopDifficulty++;
+    } else if (recentAccuracy < 0.65 && testState.stroopDifficulty > 1) {
+        testState.stroopDifficulty--;
+    }
+}
+
+function checkStroopCompletion(elapsedMinutes) {
+    // Calculate engagement metrics
+    const avgResponseTime = testState.stroopTrials.length > 0
+        ? testState.stroopTrials.reduce((sum, t) => sum + t.responseTime, 0) / testState.stroopTrials.length
+        : 0;
+    
+    const accuracy = testState.stroopTotal > 0 
+        ? testState.stroopCorrect / testState.stroopTotal
+        : 0;
+    
+    // High engagement: quick responses + good accuracy
+    const isEngaged = avgResponseTime < 2000 && accuracy > 0.6;
+    
+    // End conditions
+    if (elapsedMinutes >= 5) return true; // Max 5 minutes
+    if (elapsedMinutes >= 3 && isEngaged) return true; // Min 3 minutes if engaged
+    if (testState.stroopTotal >= 60 && isEngaged) return true; // At least 60 trials if engaged
+    
+    return false;
+}
+
+function endStroopTest() {
+    // Calculate effectiveness score (1-100)
+    const totalTime = (new Date() - testState.stroopStartTime) / 1000; // seconds
+    const avgResponseTime = testState.stroopTrials.length > 0
+        ? testState.stroopTrials.reduce((sum, t) => sum + t.responseTime, 0) / testState.stroopTrials.length
+        : 3000;
+    
+    const accuracy = testState.stroopTotal > 0 
+        ? testState.stroopCorrect / testState.stroopTotal
+        : 0;
+    
+    // Calculate consistency (standard deviation of response times)
+    const responseTimes = testState.stroopTrials.map(t => t.responseTime);
+    const mean = avgResponseTime;
+    const variance = responseTimes.reduce((sum, rt) => sum + Math.pow(rt - mean, 2), 0) / responseTimes.length;
+    const stdDev = Math.sqrt(variance);
+    const consistency = Math.max(0, 1 - (stdDev / mean)); // 0-1, higher is more consistent
+    
+    // Scoring components (each 0-1)
+    const responseScore = Math.max(0, Math.min(1, 1 - (avgResponseTime / 3000))); // Faster = better, cap at 3s
+    const accuracyScore = Math.min(1, accuracy / 0.75); // Target 75%, max at 100%
+    const engagementScore = Math.min(1, testState.stroopTotal / 50); // Want at least 50 trials
+    const timeScore = Math.min(1, (totalTime / 180)); // Want at least 3 minutes
+    
+    // Weighted effectiveness score
+    testState.stroopEffectivenessScore = Math.round(
+        (responseScore * 0.3 + 
+         accuracyScore * 0.3 + 
+         consistency * 0.2 + 
+         engagementScore * 0.1 + 
+         timeScore * 0.1) * 100
+    );
+    
+    // Show completion message
+    const testArea = document.getElementById('test-area');
+    testArea.innerHTML = `
+        <div class="recall-interface">
+            <h2>Attention Task Complete!</h2>
+            <p>Thank you for your focus.</p>
+            <p>Now we'll continue with the final memory test.</p>
+        </div>
+    `;
+    
+    setTimeout(() => {
+        startDelayedRecall();
+    }, 3000);
+}
+
 function finishTest() {
     const testArea = document.getElementById('test-area');
     const endTime = new Date();
@@ -823,6 +1073,8 @@ function uploadResults() {
         freeRecallResults: JSON.stringify(testState.results.freeRecall),
         cuedRecallTimes: JSON.stringify(testState.cuedRecallTimes),
         cuedRecallResults: JSON.stringify(testState.results.cuedRecall),
+        stroopEffectivenessScore: testState.stroopEffectivenessScore,
+        stroopTrials: JSON.stringify(testState.stroopTrials),
         delayedFreeRecallTime: testState.delayedFreeRecallTime,
         delayedFreeResults: JSON.stringify(testState.results.delayedFree),
         delayedCuedRecallTimes: JSON.stringify(testState.delayedCuedRecallTimes),
