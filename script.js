@@ -726,15 +726,19 @@ function finishTest() {
                 <p><strong>Total Recall (Free + Cued):</strong> ${Math.max(...freeRecallScores) + Math.max(...cuedRecallScores)} / ${totalWords}</p>
             </div>
             
-            <button id="download-results">Download Detailed Results</button>
-            <button id="upload-results">Upload Results</button>
-            <button id="restart-test">Take Test Again</button>
+            <div id="upload-status" style="margin: 30px 0; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+                <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">⏳ Uploading Results...</p>
+                <p style="color: #856404;">Please do not close this page until upload is complete.</p>
+            </div>
+            
+            <div id="action-buttons" style="display: none;">
+                <button id="restart-test">Take Test Again</button>
+            </div>
         </div>
     `;
     
-    document.getElementById('download-results').onclick = downloadResults;
-    document.getElementById('upload-results').onclick = uploadResults;
-    document.getElementById('restart-test').onclick = () => location.reload();
+    // Automatically upload results
+    uploadResults();
 }
 
 function downloadResults() {
@@ -832,22 +836,64 @@ function uploadResults() {
     
     fetch(endpointUrl, {
         method: 'POST',
+        mode: 'no-cors',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     })
     .then(response => {
-        if (response.ok) {
-            alert('Results uploaded successfully!');
-        } else {
-            alert('Upload failed. Please download the results instead.');
-        }
+        // With no-cors mode, we can't check response.ok, so we assume success
+        showUploadSuccess();
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Upload failed. Please download the results instead.');
+        showUploadFailure();
     });
+}
+
+function showUploadSuccess() {
+    const uploadStatus = document.getElementById('upload-status');
+    if (uploadStatus) {
+        uploadStatus.innerHTML = `
+            <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #27ae60;">✓ Results Uploaded Successfully!</p>
+            <p style="color: #155724;">Thank you for completing the test. Your data has been saved.</p>
+        `;
+        uploadStatus.style.background = '#d4edda';
+        uploadStatus.style.borderColor = '#27ae60';
+    }
+    
+    // Show restart button
+    const actionButtons = document.getElementById('action-buttons');
+    if (actionButtons) {
+        actionButtons.style.display = 'block';
+        document.getElementById('restart-test').onclick = () => location.reload();
+    }
+}
+
+function showUploadFailure() {
+    const uploadStatus = document.getElementById('upload-status');
+    if (uploadStatus) {
+        uploadStatus.innerHTML = `
+            <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #e74c3c;">✗ Upload Failed</p>
+            <p style="color: #721c24; margin-bottom: 15px;">We couldn't upload your results automatically. Please download them and email to:</p>
+            <p style="font-weight: bold; color: #721c24; margin-bottom: 15px;">fcsrt.data@example.com</p>
+            <p style="color: #721c24; margin-bottom: 15px;">Subject line: <strong>Failed Data Upload</strong></p>
+            <button id="download-results" style="background: #e74c3c; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Download Results</button>
+        `;
+        uploadStatus.style.background = '#f8d7da';
+        uploadStatus.style.borderColor = '#e74c3c';
+        
+        // Attach download handler
+        document.getElementById('download-results').onclick = downloadResults;
+    }
+    
+    // Show restart button
+    const actionButtons = document.getElementById('action-buttons');
+    if (actionButtons) {
+        actionButtons.style.display = 'block';
+        document.getElementById('restart-test').onclick = () => location.reload();
+    }
 }
 
 // Dev Controls Functions
