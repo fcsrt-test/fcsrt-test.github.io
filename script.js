@@ -218,9 +218,17 @@ function showStudyItem() {
     // Show cue for target word
     cueElement.textContent = `Which one is ${targetWord.category === 'animal' ? 'an' : 'a'} ${targetWord.category}?`;
     
-    // Show current set of 4 words
+    // Show current set of 4 words - shuffle the order for this presentation
     gridElement.innerHTML = '';
-    currentSet.forEach(wordObj => {
+    
+    // Shuffle the current set
+    const shuffledSet = [...currentSet];
+    for (let i = shuffledSet.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledSet[i], shuffledSet[j]] = [shuffledSet[j], shuffledSet[i]];
+    }
+    
+    shuffledSet.forEach(wordObj => {
         const div = document.createElement('div');
         div.className = wordObj.learned ? 'study-item correct' : 'study-item';
         div.textContent = wordObj.word;
