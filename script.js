@@ -11,6 +11,21 @@ let testState = {
     startTime: null,
     userId: null,          // ADD THIS
     demographics: {},      // ADD THIS
+    
+    // Timing state
+    studyStartTime: null, // when the current study set was shown
+    freeRecallStartTime: null, // when the current free recall trial started
+    cuedRecallStartTime: null, // when the current cued recall category was shown
+    delayedFreeRecallStartTime: null, // when delayed free recall started
+    delayedCuedRecallStartTime: null, // when the current delayed cued category was shown
+
+    // Arrays to store times
+    studyTimes: [], // { word: 'dog', time: 1234 } for each study word selection
+    freeRecallTimes: [], // time in ms for each free recall trial
+    cuedRecallTimes: [], // time in ms for each cued recall category
+    delayedFreeRecallTime: null, // time for delayed free recall
+    delayedCuedRecallTimes: [], // time for each delayed cued category
+
     results: {
         freeRecall: [[], [], []],
         cuedRecall: [[], [], []],
@@ -214,10 +229,23 @@ function showStudyItem() {
         }
         gridElement.appendChild(div);
     });
+    
+    // Record the start time for this study item
+    testState.studyStartTime = new Date();
 }
 
 function selectStudyItem(isCorrect, element, wordObj) {
     wordObj.attempts++;
+    
+    // Calculate reaction time
+    const reactionTime = new Date() - testState.studyStartTime;
+    testState.studyTimes.push({
+        word: wordObj.word,
+        category: wordObj.category,
+        set: wordObj.set,
+        reactionTime: reactionTime,
+        correct: isCorrect
+    });
     
     if (isCorrect) {
         wordObj.learned = true;
@@ -259,6 +287,9 @@ function showRecallInterface() {
         `;
         
         document.getElementById('recall-submit').onclick = submitFreeRecall;
+        
+        // Record the start time for this free recall trial
+        testState.freeRecallStartTime = new Date();
     } else {
         // Start delayed recall after a brief pause
         testArea.innerHTML = `
@@ -275,6 +306,10 @@ function showRecallInterface() {
 }
 
 function submitFreeRecall() {
+    // Calculate reaction time
+    const reactionTime = new Date() - testState.freeRecallStartTime;
+    testState.freeRecallTimes.push(reactionTime);
+    
     const input = document.getElementById('recall-input').value;
     const recalledWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
@@ -363,9 +398,16 @@ function showNextCategoryPrompt() {
             submitCategoryAnswer(currentCategory, missedInCategory);
         }
     });
+    
+    // Record the start time for this cued recall category
+    testState.cuedRecallStartTime = new Date();
 }
 
 function submitCategoryAnswer(currentCategory, missedInCategory) {
+    // Calculate reaction time
+    const reactionTime = new Date() - testState.cuedRecallStartTime;
+    testState.cuedRecallTimes.push(reactionTime);
+    
     const input = document.getElementById('cued-input').value;
     const inputWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
@@ -430,9 +472,16 @@ function startDelayedRecall() {
     `;
     
     document.getElementById('delayed-recall-submit').onclick = submitDelayedFreeRecall;
+    
+    // Record the start time for delayed free recall
+    testState.delayedFreeRecallStartTime = new Date();
 }
 
 function submitDelayedFreeRecall() {
+    // Calculate reaction time
+    const reactionTime = new Date() - testState.delayedFreeRecallStartTime;
+    testState.delayedFreeRecallTime = reactionTime;
+    
     const input = document.getElementById('delayed-recall-input').value;
     const recalledWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
@@ -519,9 +568,16 @@ function showNextDelayedCategoryPrompt() {
             submitDelayedCategoryAnswer(currentCategory, missedInCategory);
         }
     });
+    
+    // Record the start time for this delayed cued recall category
+    testState.delayedCuedRecallStartTime = new Date();
 }
 
 function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
+    // Calculate reaction time
+    const reactionTime = new Date() - testState.delayedCuedRecallStartTime;
+    testState.delayedCuedRecallTimes.push(reactionTime);
+    
     const input = document.getElementById('delayed-cued-input').value;
     const inputWords = input.toLowerCase().split(/\n/).map(w => w.trim()).filter(w => w);
     
@@ -538,38 +594,9 @@ function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
     // Add to overall delayed cued recall results
     testState.delayedCuedResults.push(...correctWordsInCategory);
     
-    // Show feedback
-    const inputElement = document.getElementById('delayed-cued-input');
-    const feedbackElement = document.getElementById('delayed-cued-feedback');
-    
-    // Compute the words that are still missed in this category (not recalled in cued recall)
-    const stillMissedWords = missedInCategory
-        .filter(w => !correctWordsInCategory.includes(w.word.toLowerCase()))
-        .map(w => w.word);
-    
-    if (correctWordsInCategory.length > 0) {
-        feedbackElement.textContent = `You recalled ${correctWordsInCategory.length} word(s) correctly! The missed ${currentCategory} words were: ${stillMissedWords.join(', ')}`;
-        feedbackElement.style.color = 'green';
-        inputElement.style.backgroundColor = '#d4edda';
-    } else {
-        feedbackElement.textContent = `No correct words recalled. The ${currentCategory} words were: ${stillMissedWords.join(', ')}`;
-        feedbackElement.style.color = 'red';
-        inputElement.style.backgroundColor = '#f8d7da';
-    }
-    
-    // Disable the input and submit button
-    inputElement.disabled = true;
-    document.getElementById('delayed-cued-submit').disabled = true;
-    
-    // Create and show the Next button
-    const nextButton = document.createElement('button');
-    nextButton.id = 'delayed-cued-next';
-    nextButton.textContent = 'Next';
-    nextButton.onclick = () => {
-        testState.currentCuedIndex++;
-        showNextDelayedCategoryPrompt();
-    };
-    feedbackElement.appendChild(nextButton);
+    // Immediately advance to the next category
+    testState.currentCuedIndex++;
+    showNextDelayedCategoryPrompt();
 }
 
 function finishTest() {
@@ -615,29 +642,64 @@ function finishTest() {
 }
 
 function downloadResults() {
-    const results = {
+    // Prepare data for CSV
+    const data = {
+        // Demographics
         userId: testState.userId,
-        demographics: testState.demographics,
+        ...testState.demographics,
+        
+        // Test metadata
         testDate: new Date().toISOString(),
         duration: Math.round((new Date() - testState.startTime) / 1000 / 60),
-        studyWords: testState.studyWords,
-        freeRecallTrials: testState.results.freeRecall,
-        cuedRecallTrials: testState.results.cuedRecall,
-        delayedFreeRecall: testState.results.delayedFree,
-        delayedCuedRecall: testState.results.delayedCued,
-        scores: {
-            freeRecallScores: testState.results.freeRecall.map(trial => trial.length),
-            totalCuedRecall: testState.results.cuedRecall.reduce((sum, trial) => sum + trial.length, 0),
-            delayedFreeScore: testState.results.delayedFree.length,
-            delayedCuedScore: testState.results.delayedCued.length
-        }
+        
+        // Study times: we'll stringify the array
+        studyTimes: JSON.stringify(testState.studyTimes),
+        
+        // Free recall
+        freeRecallTimes: JSON.stringify(testState.freeRecallTimes),
+        freeRecallResults: JSON.stringify(testState.results.freeRecall),
+        
+        // Cued recall
+        cuedRecallTimes: JSON.stringify(testState.cuedRecallTimes),
+        cuedRecallResults: JSON.stringify(testState.results.cuedRecall),
+        
+        // Delayed free recall
+        delayedFreeRecallTime: testState.delayedFreeRecallTime,
+        delayedFreeResults: JSON.stringify(testState.results.delayedFree),
+        
+        // Delayed cued recall
+        delayedCuedRecallTimes: JSON.stringify(testState.delayedCuedRecallTimes),
+        delayedCuedResults: JSON.stringify(testState.results.delayedCued),
+        
+        // Word list
+        wordList: JSON.stringify(testState.studyWords.map(w => ({
+            word: w.word,
+            category: w.category,
+            set: w.set,
+            learned: w.learned,
+            attempts: w.attempts
+        })))
     };
     
-    const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+    // Convert to CSV
+    const csvHeaders = Object.keys(data);
+    const csvRow = csvHeaders.map(header => {
+        // Escape quotes and wrap in quotes if contains comma
+        let value = data[header];
+        if (typeof value === 'string' && value.includes(',')) {
+            value = `"${value}"`;
+        }
+        return value;
+    });
+    
+    const csvContent = [csvHeaders.join(','), csvRow.join(',')].join('\n');
+    
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `FCSRT_${testState.userId}_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `FCSRT_${testState.userId}_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
