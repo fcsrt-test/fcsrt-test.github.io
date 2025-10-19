@@ -92,8 +92,14 @@ function selectRandomWords() {
 
 
 function showDemographicsScreen() {
-    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('returning-user-screen').style.display = 'none';
+    document.getElementById('user-id-screen').style.display = 'none';
     document.getElementById('demographics-screen').style.display = 'block';
+    
+    // Re-attach the submit handler
+    const form = document.getElementById('demographics-form');
+    form.removeEventListener('submit', handleDemographicsSubmit); // Remove existing event listener
+    form.addEventListener('submit', handleDemographicsSubmit);
 }
 
 function generateUserId(initials, birthYear) {
