@@ -238,8 +238,8 @@ function handleDemographicsSubmit(e) {
         testDate: new Date().toISOString()
     };
     
-    // Set appropriate word bank based on language proficiency
-    testState.wordBank = nativeEnglish === 'yes' ? 'native' : 'nonNative';
+    // Set appropriate word bank based on language proficiency (Y/N from select)
+    testState.wordBank = nativeEnglish === 'Y' ? 'native' : 'nonNative';
     
     // Reinitialize word sets with the correct word bank
     initializeWordSets();
@@ -252,12 +252,12 @@ function handleDemographicsSubmit(e) {
     const messageDiv = document.createElement('div');
     messageDiv.style.textAlign = 'center';
     messageDiv.innerHTML = `
-        <div style="padding: 20px; background: #d4edda; border: 2px solid #27ae60; border-radius: 8px; margin: 20px 0;">
-            <p style="font-size: 18px; margin-bottom: 10px;">Your User ID is:</p>
+        <div class="participant-id-display">
+            <p style="font-size: 18px; margin-bottom: 10px;">Your Participant ID:</p>
             <p style="font-size: 24px; font-weight: bold; color: #27ae60; margin-bottom: 10px;">${testState.userId}</p>
             <p style="font-size: 14px; color: #155724;">Please save this ID for future sessions.</p>
         </div>
-        <button id="begin-test-button" style="background: #3498db; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Begin Test</button>
+        <button id="begin-test-button" class="btn btn-primary" style="margin-top: 20px;">Begin Test</button>
     `;
     demographicsScreen.appendChild(messageDiv);
     
@@ -691,6 +691,7 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
     const nextButton = document.createElement('button');
     nextButton.id = 'cued-next';
     nextButton.textContent = 'Next';
+    nextButton.className = 'btn btn-primary';
     nextButton.onclick = () => {
         testState.currentCuedIndex++;
         showNextCategoryPrompt();
