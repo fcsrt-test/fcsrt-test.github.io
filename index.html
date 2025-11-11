@@ -9,9 +9,27 @@
 <body>
     <div class="container">
         <div id="welcome-screen">
-            <h1>Free and Cued Selective Reminding Test (FCSRT)</h1>
-            <p>This test measures your ability to learn and remember words.</p>
-            <button id="begin-test">Begin Test</button>
+            <h1>Memory Test</h1>
+            <div class="instructions">
+                <h2>What to Expect:</h2>
+                <ol>
+                    <li><strong>Word Learning:</strong> You'll see some words with categories (like 'animal' or 'furniture'). Try to remember them.</li>
+                    <li><strong>Remembering Words:</strong> We'll ask you to recall the words you saw.</li>
+                    <li><strong>Categories Help:</strong> If you can't remember a word, we'll give you the category to help.</li>
+                </ol>
+                
+                <div class="test-tips">
+                    <h3>Tips:</h3>
+                    <ul>
+                        <li>Take your time</li>
+                        <li>It's okay if you don't remember everything</li>
+                        <li>Try your best</li>
+                    </ul>
+                </div>
+                
+                <p>The test will take about 15-20 minutes to complete.</p>
+                <button id="begin-test" class="begin-button">I'm Ready to Begin</button>
+            </div>
         </div>
         
         <div id="returning-user-screen" style="display:none;">
@@ -74,6 +92,15 @@
                         <option value="Y">Yes</option>
                         <option value="N">No</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="colorblind">Do you have any form of color vision deficiency (colorblindness)?</label>
+                    <select id="colorblind" required>
+                        <option value="N">No, I see colors normally</option>
+                        <option value="Y">Yes, I have some form of colorblindness</option>
+                    </select>
+                    <small>This helps us adjust the test for better visibility.</small>
                 </div>
 
                 <div class="form-group checkbox-group">

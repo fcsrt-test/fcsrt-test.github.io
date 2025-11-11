@@ -127,11 +127,18 @@ function handleDemographicsSubmit(e) {
     const gender = document.getElementById('gender').value;
     const education = document.getElementById('education').value;
     const nativeEnglish = document.getElementById('native-english').value;
+    const isColorblind = document.getElementById('colorblind').value === 'Y';
     
     const currentYear = new Date().getFullYear();
     const age = currentYear - parseInt(birthYear);
     
     testState.userId = generateUserId(initials, birthYear);
+    
+    testState.isColorblind = isColorblind;
+    
+    if (isColorblind) {
+        document.body.classList.add('colorblind-mode');
+    }
     
     testState.demographics = {
         userId: testState.userId,
@@ -141,6 +148,7 @@ function handleDemographicsSubmit(e) {
         gender: gender,
         education: education,
         nativeEnglish: nativeEnglish,
+        isColorblind: isColorblind,
         testDate: new Date().toISOString()
     };
     
@@ -739,19 +747,34 @@ function startStroopTest() {
     testState.stroopTotal = 0;
     testState.stroopDifficulty = 1;
     
+    const isColorblind = testState.isColorblind || false;
+    const colorblindClass = isColorblind ? 'colorblind-mode' : '';
+    
     const testArea = document.getElementById('test-area');
     testArea.innerHTML = `
         <div class="stroop-interface" style="text-align: center; padding: 40px;">
             <h2>Attention Task</h2>
-            <p style="margin-bottom: 30px;">Click the button that matches the COLOR of the text (not the word itself).</p>
+            <p style="margin-bottom: 30px;">${isColorblind ? 'Click the button that matches the TEXT of the word (not the word itself).' : 'Click the button that matches the COLOR of the text (not the word itself).'}</p>
             
-            <div id="stroop-stimulus" style="font-size: 48px; font-weight: bold; margin: 40px 0; min-height: 80px;"></div>
+            <div id="stroop-stimulus" class="${colorblindClass}" style="font-size: 48px; font-weight: bold; margin: 40px 0; min-height: 80px; padding: 20px; border-radius: 8px; display: inline-block;"></div>
             
             <div id="stroop-buttons" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; max-width: 600px; margin: 0 auto;">
-                <button class="stroop-btn" data-color="red" style="background: #e74c3c; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">RED</button>
-                <button class="stroop-btn" data-color="blue" style="background: #3498db; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">BLUE</button>
-                <button class="stroop-btn" data-color="green" style="background: #27ae60; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">GREEN</button>
-                <button class="stroop-btn" data-color="yellow" style="background: #f1c40f; color: black; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px;">YELLOW</button>
+                <button class="stroop-btn ${colorblindClass}" data-color="red" style="position: relative; background: #e74c3c; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
+                    <span class="color-label">RED</span>
+                    ${isColorblind ? '<span class="pattern pattern-dots" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(black 20%, transparent 20%); background-size: 10px 10px; opacity: 0.3;"></span>' : ''}
+                </button>
+                <button class="stroop-btn ${colorblindClass}" data-color="blue" style="position: relative; background: #3498db; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
+                    <span class="color-label">BLUE</span>
+                    ${isColorblind ? '<span class="pattern pattern-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, transparent, transparent 5px, black 5px, black 10px); opacity: 0.3;"></span>' : ''}
+                </button>
+                <button class="stroop-btn ${colorblindClass}" data-color="green" style="position: relative; background: #27ae60; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
+                    <span class="color-label">GREEN</span>
+                    ${isColorblind ? '<span class="pattern pattern-checker" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%); background-size: 10px 10px; opacity: 0.3;"></span>' : ''}
+                </button>
+                <button class="stroop-btn ${colorblindClass}" data-color="yellow" style="position: relative; background: #f1c40f; color: black; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
+                    <span class="color-label">YELLOW</span>
+                    ${isColorblind ? '<span class="pattern pattern-zigzag" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #000 10px, transparent 0) -10px 0, linear-gradient(225deg, #000 10px, transparent 0) -10px 0, linear-gradient(315deg, #000 10px, transparent 0), linear-gradient(45deg, #000 10px, transparent 0); background-size: 20px 20px; opacity: 0.3;"></span>' : ''}
+                </button>
             </div>
             
             <div id="stroop-feedback" style="margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 30px;"></div>
@@ -760,6 +783,7 @@ function startStroopTest() {
                 <p><strong>Progress:</strong> <span id="stroop-count">0</span> trials completed</p>
                 <p><strong>Accuracy:</strong> <span id="stroop-accuracy">0%</span></p>
                 <p style="font-size: 14px; color: #666; margin-top: 10px;">Task will complete in 3-5 minutes</p>
+                ${isColorblind ? '<p style="font-size: 14px; color: #e74c3c; margin-top: 10px;">Colorblind mode is active - using patterns to assist with color differentiation</p>' : ''}
             </div>
         </div>
     `;
@@ -810,15 +834,40 @@ function showStroopTrial() {
     
     const stimulus = document.getElementById('stroop-stimulus');
     if (stimulus) {
-        stimulus.textContent = words[wordIndex];
-        stimulus.style.color = colorMap[colors[colorIndex]];
+        const isColorblind = testState.isColorblind || false;
+        const colorName = colors[colorIndex].toUpperCase();
+        
+        if (isColorblind) {
+            // For colorblind users, show the color name as text to the right of the word
+            stimulus.innerHTML = `
+                <span class="stimulus-word">${words[wordIndex]}</span>
+                <span class="color-hint" style="font-size: 24px; margin-left: 20px; color: #666;">
+                    (${colorName})
+                </span>
+            `;
+            stimulus.style.color = '#333'; // Use dark text for better contrast
+            stimulus.style.backgroundColor = '#f8f9fa';
+            stimulus.style.padding = '20px';
+            stimulus.style.borderRadius = '8px';
+            stimulus.style.display = 'inline-block';
+            
+            // Add a small indicator of the color (for those with partial color vision)
+            stimulus.style.borderLeft = `8px solid ${colorMap[colors[colorIndex]]}`;
+        } else {
+            // Original behavior for non-colorblind users
+            stimulus.textContent = words[wordIndex];
+            stimulus.style.color = colorMap[colors[colorIndex]];
+            stimulus.style.backgroundColor = 'transparent';
+            stimulus.style.borderLeft = 'none';
+        }
         
         // Store current trial data
         testState.currentStroopTrial = {
             word: words[wordIndex],
             color: colors[colorIndex],
             startTime: new Date(),
-            difficulty: testState.stroopDifficulty
+            difficulty: testState.stroopDifficulty,
+            isColorblind: isColorblind
         };
     }
 }
@@ -846,12 +895,23 @@ function handleStroopResponse(selectedColor) {
     // Show feedback
     const feedback = document.getElementById('stroop-feedback');
     if (feedback) {
-        feedback.textContent = correct ? '✓ Correct!' : '✗ Incorrect';
-        feedback.style.color = correct ? '#27ae60' : '#e74c3c';
+        const isColorblind = testState.isColorblind || false;
+        
+        if (correct) {
+            feedback.textContent = '✓ Correct!';
+            feedback.style.color = '#27ae60';
+            
+            if (isColorblind) {
+                feedback.textContent += ` (${trial.color.toUpperCase()})`;
+            }
+        } else {
+            feedback.textContent = `✗ Incorrect (You selected ${selectedColor.toUpperCase()}, correct was ${trial.color.toUpperCase()})`;
+            feedback.style.color = '#e74c3c';
+        }
         
         setTimeout(() => {
             feedback.textContent = '';
-        }, 500);
+        }, isColorblind ? 1500 : 500); // Give colorblind users more time to read the feedback
     }
     
     // Update progress
