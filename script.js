@@ -188,10 +188,7 @@ function selectRandomWords() {
     return currentWordSet.words;
 }
 
-function showDemographicsScreen() {
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('demographics-screen').style.display = 'block';
-}
+
 
 function generateUserId(initials, birthYear) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
