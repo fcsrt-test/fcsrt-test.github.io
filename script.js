@@ -99,18 +99,34 @@ function initializeWordSets() {
         // Select 4 categories for this set
         const selectedCategories = [...categories].sort(() => 0.5 - Math.random()).slice(0, 4);
         
-        // Select 4 words from each selected category
+        // For each selected category, pick exactly 4 words
         for (const category of selectedCategories) {
-            // Filter out words that have already been used
+            // Get all words from this category that haven't been used yet
             const availableWords = wordBank[category].filter(word => !usedWords.has(word));
             
-            // If we don't have enough unique words, just take what we have
-            const wordsToAdd = availableWords.length >= 4 
-                ? availableWords.sort(() => 0.5 - Math.random()).slice(0, 4)
-                : availableWords;
+            // If we don't have enough words, log an error (shouldn't happen with our word bank)
+            if (availableWords.length < 4) {
+                console.error(`Not enough unique words in category: ${category}`);
+                // Fill with placeholder if needed (shouldn't happen with current word bank)
+                for (let i = 0; i < 4; i++) {
+                    wordSet.push({
+                        word: `${category}-word-${i+1}`,
+                        category: category,
+                        set: set + 1,
+                        learned: false,
+                        attempts: 0
+                    });
+                }
+                continue;
+            }
             
-            // Add words to the set
-            wordsToAdd.forEach(word => {
+            // Randomly select 4 words from this category
+            const selectedWords = [...availableWords]
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 4);
+            
+            // Add the selected words to the set
+            selectedWords.forEach(word => {
                 wordSet.push({
                     word: word,
                     category: category,
@@ -122,7 +138,12 @@ function initializeWordSets() {
             });
         }
         
-        // Shuffle the word set
+        // Verify we have exactly 16 words (4 categories × 4 words each)
+        if (wordSet.length !== 16) {
+            console.error(`Word set ${set + 1} has ${wordSet.length} words instead of 16`);
+        }
+        
+        // Shuffle the word set before adding to testState
         testState.wordSets.push(wordSet.sort(() => 0.5 - Math.random()));
     }
     
@@ -342,54 +363,94 @@ function startStudyPhase() {
 }
 
 function showStudyItem() {
+    // Get all words from the current set
     const currentSet = testState.studyWords.filter(w => w.set === testState.currentSet);
     const unlearnedWords = currentSet.filter(w => !w.learned);
     
+    // If all words in this set are learned, move to the next set
     if (unlearnedWords.length === 0) {
         testState.currentSet++;
-        if (testState.currentSet >= 4) {
+        if (testState.currentSet >= 3) { // We have 3 sets (0, 1, 2)
             console.log('Study phase complete');
             // Transition to recall phase
             startRecallPhase();
             return;
         }
+        // Reset for next set
+        testState.learnedInCurrentSet = 0;
         showStudyItem();
         return;
     }
     
-    const targetWord = unlearnedWords[0];
+    // Get one unlearned word from each category
+    const categories = [...new Set(currentSet.map(w => w.category))];
+    const wordsToShow = [];
+    
+    // For each category, get one unlearned word (or learned if no unlearned left)
+    categories.forEach(category => {
+        const categoryWords = currentSet.filter(w => w.category === category);
+        const unlearnedInCategory = categoryWords.filter(w => !w.learned);
+        const wordToShow = unlearnedInCategory.length > 0 
+            ? unlearnedInCategory[0] 
+            : categoryWords[0]; // Fallback to any word in the category
+        
+        if (wordToShow) {
+            wordsToShow.push(wordToShow);
+        }
+    });
+    
+    // Select a random target word from the unlearned words in the current set
+    const targetWord = unlearnedWords[Math.floor(Math.random() * unlearnedWords.length)];
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
     const progressElement = document.getElementById('study-progress');
     
-    // Update progress bar
+    // Update progress
     const totalLearned = testState.studyWords.filter(w => w.learned).length;
-    const progress = (totalLearned / 16) * 100;
+    const progress = (totalLearned / 12) * 100; // 12 words total (4 words × 3 sets)
     const progressBar = progressElement.querySelector('.progress-bar');
     progressBar.style.width = progress + '%';
+    progressBar.textContent = `${totalLearned}/12 words learned`;
     
-    // Show cue for target word
-    cueElement.textContent = `Which one is ${targetWord.category === 'animal' ? 'an' : 'a'} ${targetWord.category}?`;
+    // Show cue for target word's category
+    cueElement.textContent = `Which one is ${'aeiou'.includes(targetWord.category[0].toLowerCase()) ? 'an' : 'a'} ${targetWord.category}?`;
     
-    // Show current set of 4 words - shuffle the order for this presentation
+    // Clear previous words
     gridElement.innerHTML = '';
     
-    // Shuffle the current set
-    const shuffledSet = [...currentSet];
-    for (let i = shuffledSet.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledSet[i], shuffledSet[j]] = [shuffledSet[j], shuffledSet[i]];
+    // Shuffle the words to show (but make sure the target is included)
+    const wordsToDisplay = [...wordsToShow];
+    if (!wordsToDisplay.some(w => w.word === targetWord.word)) {
+        // Replace a random word with the target if it's not already there
+        const randomIndex = Math.floor(Math.random() * wordsToDisplay.length);
+        wordsToDisplay[randomIndex] = targetWord;
     }
     
-    shuffledSet.forEach(wordObj => {
+    // Shuffle the words to display
+    const shuffledWords = [...wordsToDisplay].sort(() => Math.random() - 0.5);
+    
+    // Display each word in the grid
+    shuffledWords.forEach(wordObj => {
         const div = document.createElement('div');
+        const isTarget = wordObj.word === targetWord.word;
         div.className = wordObj.learned ? 'study-item correct' : 'study-item';
         div.textContent = wordObj.word;
+        
         if (!wordObj.learned) {
-            div.onclick = () => selectStudyItem(wordObj.word === targetWord.word, div, wordObj);
+            div.onclick = () => selectStudyItem(isTarget, div, wordObj);
+            div.style.cursor = 'pointer';
+            div.style.transition = 'all 0.3s ease';
+            div.onmouseover = () => { if (!wordObj.learned) div.style.transform = 'scale(1.05)'; };
+            div.onmouseout = () => { if (!wordObj.learned) div.style.transform = 'scale(1)'; };
+        } else {
+            div.style.opacity = '0.7';
         }
+        
         gridElement.appendChild(div);
     });
+    
+    // Update the target word for this trial
+    testState.currentTargetWord = targetWord;
     
     // Record the start time for this study item
     testState.studyStartTime = new Date();
