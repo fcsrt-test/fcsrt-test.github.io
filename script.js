@@ -84,6 +84,7 @@ async function loadWordBank() {
 function initializeWordSets() {
     // Clear any existing words
     testState.wordSets = [];
+    testState.cards = [];
     
     // Get the appropriate word bank based on user's language preference
     const wordBank = WORD_DATABASE[testState.wordBank] || WORD_DATABASE.native;
@@ -113,6 +114,7 @@ function initializeWordSets() {
                         word: `${category}-word-${i+1}`,
                         category: category,
                         set: set + 1,
+                        card: 0, // Will be updated when creating cards
                         learned: false,
                         attempts: 0
                     });
@@ -126,11 +128,12 @@ function initializeWordSets() {
                 .slice(0, 4);
             
             // Add the selected words to the set
-            selectedWords.forEach(word => {
+            selectedWords.forEach((word, index) => {
                 wordSet.push({
                     word: word,
                     category: category,
                     set: set + 1, // 1-based set number
+                    card: index + 1, // 1-based card number (each card gets one word from each category)
                     learned: false,
                     attempts: 0
                 });
@@ -138,13 +141,33 @@ function initializeWordSets() {
             });
         }
         
-        // Verify we have exactly 16 words (4 categories × 4 words each)
+        // Create 4 cards for this set (each card has 1 word from each category)
+        const cards = [];
+        for (let cardNum = 1; cardNum <= 4; cardNum++) {
+            const cardWords = wordSet.filter(word => word.card === cardNum);
+            cards.push({
+                set: set + 1,
+                cardNumber: cardNum,
+                words: [...cardWords],
+                isComplete: false
+            });
+        }
+        
+        // Verify we have exactly 16 words (4 categories × 4 words each) and 4 cards
         if (wordSet.length !== 16) {
             console.error(`Word set ${set + 1} has ${wordSet.length} words instead of 16`);
         }
+        if (cards.length !== 4) {
+            console.error(`Expected 4 cards but got ${cards.length}`);
+        }
         
-        // Shuffle the word set before adding to testState
-        testState.wordSets.push(wordSet.sort(() => 0.5 - Math.random()));
+        // Add the set and its cards to testState
+        testState.wordSets.push({
+            setNumber: set + 1,
+            words: wordSet,
+            cards: cards,
+            currentCard: 0
+        });
     }
     
     // Set the first word set as active
@@ -363,74 +386,62 @@ function startStudyPhase() {
 }
 
 function showStudyItem() {
-    // Get all words from the current set
-    const currentSet = testState.studyWords.filter(w => w.set === testState.currentSet);
-    const unlearnedWords = currentSet.filter(w => !w.learned);
+    const currentSetObj = testState.wordSets[testState.currentSet];
+    const currentCard = currentSetObj.cards[currentSetObj.currentCard];
     
-    // If all words in this set are learned, move to the next set
+    // If all words in this card are learned, move to the next card
+    const unlearnedWords = currentCard.words.filter(word => !word.learned);
+    
     if (unlearnedWords.length === 0) {
-        testState.currentSet++;
-        if (testState.currentSet >= 3) { // We have 3 sets (0, 1, 2)
-            console.log('Study phase complete');
-            // Transition to recall phase
-            startRecallPhase();
-            return;
+        // Mark this card as complete
+        currentCard.isComplete = true;
+        
+        // Move to next card or next set
+        if (currentSetObj.currentCard < currentSetObj.cards.length - 1) {
+            // Move to next card in current set
+            currentSetObj.currentCard++;
+        } else {
+            // Move to next set or end study phase
+            testState.currentSet++;
+            if (testState.currentSet >= testState.wordSets.length) {
+                console.log('Study phase complete');
+                // Transition to recall phase
+                startRecallPhase();
+                return;
+            } else {
+                // Reset to first card of next set
+                testState.wordSets[testState.currentSet].currentCard = 0;
+            }
         }
-        // Reset for next set
-        testState.learnedInCurrentSet = 0;
+        // Show the next card
         showStudyItem();
         return;
     }
     
-    // Get one unlearned word from each category
-    const categories = [...new Set(currentSet.map(w => w.category))];
-    const wordsToShow = [];
+    // Get the current card's words
+    const currentWords = currentCard.words;
+    const targetWord = unlearnedWords[0]; // Always target the first unlearned word in the card
     
-    // For each category, get one unlearned word (or learned if no unlearned left)
-    categories.forEach(category => {
-        const categoryWords = currentSet.filter(w => w.category === category);
-        const unlearnedInCategory = categoryWords.filter(w => !w.learned);
-        const wordToShow = unlearnedInCategory.length > 0 
-            ? unlearnedInCategory[0] 
-            : categoryWords[0]; // Fallback to any word in the category
-        
-        if (wordToShow) {
-            wordsToShow.push(wordToShow);
-        }
-    });
-    
-    // Select a random target word from the unlearned words in the current set
-    const targetWord = unlearnedWords[Math.floor(Math.random() * unlearnedWords.length)];
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
     const progressElement = document.getElementById('study-progress');
     
     // Update progress
-    const totalLearned = testState.studyWords.filter(w => w.learned).length;
-    const progress = (totalLearned / 12) * 100; // 12 words total (4 words × 3 sets)
+    const totalLearned = testState.wordSets.flatMap(s => s.words).filter(w => w.learned).length;
+    const totalWords = testState.wordSets.reduce((sum, set) => sum + set.words.length, 0);
+    const progress = (totalLearned / totalWords) * 100;
     const progressBar = progressElement.querySelector('.progress-bar');
     progressBar.style.width = progress + '%';
-    progressBar.textContent = `${totalLearned}/12 words learned`;
+    progressBar.textContent = `Set ${testState.currentSet + 1}, Card ${currentSetObj.currentCard + 1}: ${totalLearned}/${totalWords} words`;
     
     // Show cue for target word's category
     cueElement.textContent = `Which one is ${'aeiou'.includes(targetWord.category[0].toLowerCase()) ? 'an' : 'a'} ${targetWord.category}?`;
     
-    // Clear previous words
+    // Clear previous words and display current card's words
     gridElement.innerHTML = '';
     
-    // Shuffle the words to show (but make sure the target is included)
-    const wordsToDisplay = [...wordsToShow];
-    if (!wordsToDisplay.some(w => w.word === targetWord.word)) {
-        // Replace a random word with the target if it's not already there
-        const randomIndex = Math.floor(Math.random() * wordsToDisplay.length);
-        wordsToDisplay[randomIndex] = targetWord;
-    }
-    
-    // Shuffle the words to display
-    const shuffledWords = [...wordsToDisplay].sort(() => Math.random() - 0.5);
-    
-    // Display each word in the grid
-    shuffledWords.forEach(wordObj => {
+    // Display each word in the current card
+    currentWords.forEach(wordObj => {
         const div = document.createElement('div');
         const isTarget = wordObj.word === targetWord.word;
         div.className = wordObj.learned ? 'study-item correct' : 'study-item';
@@ -440,8 +451,8 @@ function showStudyItem() {
             div.onclick = () => selectStudyItem(isTarget, div, wordObj);
             div.style.cursor = 'pointer';
             div.style.transition = 'all 0.3s ease';
-            div.onmouseover = () => { if (!wordObj.learned) div.style.transform = 'scale(1.05)'; };
-            div.onmouseout = () => { if (!wordObj.learned) div.style.transform = 'scale(1)'; };
+            div.onmouseover = () => { div.style.transform = 'scale(1.05)'; };
+            div.onmouseout = () => { div.style.transform = 'scale(1)'; };
         } else {
             div.style.opacity = '0.7';
         }
