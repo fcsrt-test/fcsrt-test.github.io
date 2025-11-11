@@ -297,11 +297,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (submitUserIdBtn) {
         submitUserIdBtn.addEventListener('click', handleUserIdSubmit);
     }
+    
+    showReturningUserScreen();
 });
 
 function showReturningUserScreen() {
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('returning-user-screen').style.display = 'block';
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const returningUserScreen = document.getElementById('returning-user-screen');
+    
+    if (welcomeScreen && returningUserScreen) {
+        welcomeScreen.style.display = 'none';
+        returningUserScreen.style.display = 'block';
+    }
 }
 
 function showUserIdScreen() {
