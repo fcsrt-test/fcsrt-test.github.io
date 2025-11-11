@@ -401,18 +401,8 @@ function showRecallInterface() {
         // Record the start time for this free recall trial
         testState.freeRecallStartTime = new Date();
     } else {
-        // Start Stroop test as distractor task before delayed recall
-        testArea.innerHTML = `
-            <div class="recall-interface">
-                <h2>Break Time</h2>
-                <p>Before we continue, please complete a short attention task.</p>
-                <p>This helps us ensure accurate memory measurement.</p>
-            </div>
-        `;
-        
-        setTimeout(() => {
-            startStroopTest();
-        }, 3000);
+        // Start the memory test
+        startMemoryTest();
     }
 }
 
@@ -583,6 +573,115 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
     feedbackElement.appendChild(nextButton);
 }
 
+function startMemoryTest() {
+    testState.memoryTestStartTime = new Date();
+    testState.memoryTestLevel = 1;
+    testState.memoryTestScore = 0;
+    
+    const testArea = document.getElementById('test-area');
+    testArea.innerHTML = `
+        <div class="memory-test-interface" style="text-align: center; padding: 40px;">
+            <h2>Memory Challenge</h2>
+            <p style="margin-bottom: 30px;">Memorize the number sequence, then type it back when prompted.</p>
+            
+            <div id="number-display" style="font-size: 48px; font-weight: bold; margin: 40px 0; min-height: 80px; font-family: monospace; letter-spacing: 5px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: inline-block; min-width: 300px;"></div>
+            
+            <div id="input-container" style="display: none; margin: 20px 0;">
+                <input type="text" id="number-input" style="font-family: monospace; letter-spacing: 3px; text-align: center; padding: 15px; font-size: 24px; border: 2px solid #ddd; border-radius: 5px; width: 300px;" 
+                       placeholder="Type the numbers..." maxlength="${testState.memoryTestLevel + 2}">
+                <button id="submit-sequence" style="background: #3498db; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-left: 10px; transition: background-color 0.3s;">Submit</button>
+            </div>
+            
+            <div id="memory-feedback" style="min-height: 30px; margin: 20px 0; font-size: 18px; font-weight: bold;"></div>
+            
+            <div id="memory-progress" style="margin: 30px auto; padding: 20px; background: #f8f9fa; border-radius: 8px; max-width: 300px;">
+                <p><strong>Level:</strong> <span id="memory-level">1</span></p>
+                <p><strong>Score:</strong> <span id="memory-score">0</span></p>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('submit-sequence').addEventListener('click', checkSequence);
+    document.getElementById('number-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkSequence();
+    });
+
+    startNewRound();
+}
+
+function startNewRound() {
+    const length = testState.memoryTestLevel + 2; // Increase sequence length with level
+    const sequence = Array.from({length}, () => Math.floor(Math.random() * 10)).join('');
+    
+    testState.currentSequence = sequence;
+    const display = document.getElementById('number-display');
+    const input = document.getElementById('number-input');
+    
+    // Show sequence
+    display.textContent = sequence;
+    input.value = '';
+    input.maxLength = length;
+    
+    // Hide input while showing sequence
+    document.getElementById('input-container').style.display = 'none';
+    
+    // Hide sequence and show input after delay
+    setTimeout(() => {
+        display.textContent = '?'.repeat(length);
+        document.getElementById('input-container').style.display = 'block';
+        input.focus();
+    }, 2000 + (length * 300)); // Longer display time for longer sequences
+}
+
+function checkSequence() {
+    const input = document.getElementById('number-input');
+    const feedback = document.getElementById('memory-feedback');
+    const userInput = input.value;
+    
+    if (userInput === testState.currentSequence) {
+        // Correct
+        testState.memoryTestScore += testState.memoryTestLevel * 10;
+        testState.memoryTestLevel++;
+        feedback.textContent = '✓ Correct!';
+        feedback.style.color = '#27ae60';
+        
+        // Update score and level
+        document.getElementById('memory-level').textContent = testState.memoryTestLevel;
+        document.getElementById('memory-score').textContent = testState.memoryTestScore;
+        
+        // Start next round after delay
+        setTimeout(startNewRound, 1000);
+    } else {
+        // Incorrect
+        feedback.textContent = `Incorrect. The sequence was: ${testState.currentSequence}`;
+        feedback.style.color = '#e74c3c';
+        
+        // End test after delay
+        setTimeout(endMemoryTest, 2000);
+    }
+}
+
+function endMemoryTest() {
+    // Calculate effectiveness score based on level reached and time taken
+    const timeTaken = (new Date() - testState.memoryTestStartTime) / 1000; // in seconds
+    const effectiveness = Math.min(100, Math.floor((testState.memoryTestLevel / 10) * 100));
+    
+    testState.memoryTestEffectiveness = effectiveness;
+    
+    const testArea = document.getElementById('test-area');
+    testArea.innerHTML = `
+        <div class="recall-interface">
+            <h2>Memory Challenge Complete!</h2>
+            <p>You reached level ${testState.memoryTestLevel} with a score of ${testState.memoryTestScore}.</p>
+            <p>Now we'll continue with the final memory test.</p>
+        </div>
+    `;
+    
+    setTimeout(() => {
+        startDelayedRecall();
+    }, 3000);
+}
+
 function startDelayedRecall() {
     testState.currentPhase = 'delayed';
     
@@ -736,299 +835,6 @@ function submitDelayedCategoryAnswer(currentCategory, missedInCategory) {
     // Immediately advance to the next category
     testState.currentCuedIndex++;
     showNextDelayedCategoryPrompt();
-}
-
-// ===== STROOP TEST FUNCTIONS =====
-
-function startStroopTest() {
-    testState.stroopStartTime = new Date();
-    testState.stroopTrials = [];
-    testState.stroopCorrect = 0;
-    testState.stroopTotal = 0;
-    testState.stroopDifficulty = 1;
-    
-    const isColorblind = testState.isColorblind || false;
-    const colorblindClass = isColorblind ? 'colorblind-mode' : '';
-    
-    const testArea = document.getElementById('test-area');
-    testArea.innerHTML = `
-        <div class="stroop-interface" style="text-align: center; padding: 40px;">
-            <h2>Attention Task</h2>
-            <p style="margin-bottom: 30px;">${isColorblind ? 'Click the button that matches the TEXT of the word (not the word itself).' : 'Click the button that matches the COLOR of the text (not the word itself).'}</p>
-            
-            <div id="stroop-stimulus" class="${colorblindClass}" style="font-size: 48px; font-weight: bold; margin: 40px 0; min-height: 80px; padding: 20px; border-radius: 8px; display: inline-block;"></div>
-            
-            <div id="stroop-buttons" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; max-width: 600px; margin: 0 auto;">
-                <button class="stroop-btn ${colorblindClass}" data-color="red" style="position: relative; background: #e74c3c; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
-                    <span class="color-label">RED</span>
-                    ${isColorblind ? '<span class="pattern pattern-dots" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(black 20%, transparent 20%); background-size: 10px 10px; opacity: 0.3;"></span>' : ''}
-                </button>
-                <button class="stroop-btn ${colorblindClass}" data-color="blue" style="position: relative; background: #3498db; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
-                    <span class="color-label">BLUE</span>
-                    ${isColorblind ? '<span class="pattern pattern-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, transparent, transparent 5px, black 5px, black 10px); opacity: 0.3;"></span>' : ''}
-                </button>
-                <button class="stroop-btn ${colorblindClass}" data-color="green" style="position: relative; background: #27ae60; color: white; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
-                    <span class="color-label">GREEN</span>
-                    ${isColorblind ? '<span class="pattern pattern-checker" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%); background-size: 10px 10px; opacity: 0.3;"></span>' : ''}
-                </button>
-                <button class="stroop-btn ${colorblindClass}" data-color="yellow" style="position: relative; background: #f1c40f; color: black; border: none; padding: 20px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; min-width: 120px; overflow: hidden;">
-                    <span class="color-label">YELLOW</span>
-                    ${isColorblind ? '<span class="pattern pattern-zigzag" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #000 10px, transparent 0) -10px 0, linear-gradient(225deg, #000 10px, transparent 0) -10px 0, linear-gradient(315deg, #000 10px, transparent 0), linear-gradient(45deg, #000 10px, transparent 0); background-size: 20px 20px; opacity: 0.3;"></span>' : ''}
-                </button>
-            </div>
-            
-            <div id="stroop-feedback" style="margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 30px;"></div>
-            
-            <div id="stroop-progress" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                <p><strong>Progress:</strong> <span id="stroop-count">0</span> trials completed</p>
-                <p><strong>Accuracy:</strong> <span id="stroop-accuracy">0%</span></p>
-                <p style="font-size: 14px; color: #666; margin-top: 10px;">Task will complete in 3-5 minutes</p>
-                ${isColorblind ? '<p style="font-size: 14px; color: #e74c3c; margin-top: 10px;">Colorblind mode is active - using patterns to assist with color differentiation</p>' : ''}
-            </div>
-        </div>
-    `;
-    
-    // Attach button listeners
-    document.querySelectorAll('.stroop-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => handleStroopResponse(e.target.dataset.color));
-    });
-    
-    showStroopTrial();
-}
-
-function showStroopTrial() {
-    const colors = ['red', 'blue', 'green', 'yellow'];
-    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
-    const colorMap = {
-        'red': '#e74c3c',
-        'blue': '#3498db',
-        'green': '#27ae60',
-        'yellow': '#f1c40f'
-    };
-    
-    // Select word and color based on difficulty
-    let wordIndex, colorIndex;
-    
-    if (testState.stroopDifficulty === 1) {
-        // Easy: 70% congruent trials
-        if (Math.random() < 0.7) {
-            wordIndex = Math.floor(Math.random() * words.length);
-            colorIndex = wordIndex; // Congruent
-        } else {
-            wordIndex = Math.floor(Math.random() * words.length);
-            colorIndex = (wordIndex + 1 + Math.floor(Math.random() * 3)) % 4; // Incongruent
-        }
-    } else if (testState.stroopDifficulty === 2) {
-        // Medium: 50% congruent
-        wordIndex = Math.floor(Math.random() * words.length);
-        if (Math.random() < 0.5) {
-            colorIndex = wordIndex;
-        } else {
-            colorIndex = (wordIndex + 1 + Math.floor(Math.random() * 3)) % 4;
-        }
-    } else {
-        // Hard: all incongruent
-        wordIndex = Math.floor(Math.random() * words.length);
-        colorIndex = (wordIndex + 1 + Math.floor(Math.random() * 3)) % 4;
-    }
-    
-    const stimulus = document.getElementById('stroop-stimulus');
-    if (stimulus) {
-        const isColorblind = testState.isColorblind || false;
-        const colorName = colors[colorIndex].toUpperCase();
-        
-        if (isColorblind) {
-            // For colorblind users, show the color name as text to the right of the word
-            stimulus.innerHTML = `
-                <span class="stimulus-word">${words[wordIndex]}</span>
-                <span class="color-hint" style="font-size: 24px; margin-left: 20px; color: #666;">
-                    (${colorName})
-                </span>
-            `;
-            stimulus.style.color = '#333'; // Use dark text for better contrast
-            stimulus.style.backgroundColor = '#f8f9fa';
-            stimulus.style.padding = '20px';
-            stimulus.style.borderRadius = '8px';
-            stimulus.style.display = 'inline-block';
-            
-            // Add a small indicator of the color (for those with partial color vision)
-            stimulus.style.borderLeft = `8px solid ${colorMap[colors[colorIndex]]}`;
-        } else {
-            // Original behavior for non-colorblind users
-            stimulus.textContent = words[wordIndex];
-            stimulus.style.color = colorMap[colors[colorIndex]];
-            stimulus.style.backgroundColor = 'transparent';
-            stimulus.style.borderLeft = 'none';
-        }
-        
-        // Store current trial data
-        testState.currentStroopTrial = {
-            word: words[wordIndex],
-            color: colors[colorIndex],
-            startTime: new Date(),
-            difficulty: testState.stroopDifficulty,
-            isColorblind: isColorblind
-        };
-    }
-}
-
-function handleStroopResponse(selectedColor) {
-    if (!testState.currentStroopTrial) return;
-    
-    const trial = testState.currentStroopTrial;
-    const responseTime = new Date() - trial.startTime;
-    const correct = selectedColor === trial.color;
-    
-    // Store trial result
-    testState.stroopTrials.push({
-        word: trial.word,
-        color: trial.color,
-        response: selectedColor,
-        correct: correct,
-        responseTime: responseTime,
-        difficulty: trial.difficulty
-    });
-    
-    testState.stroopTotal++;
-    if (correct) testState.stroopCorrect++;
-    
-    // Show feedback
-    const feedback = document.getElementById('stroop-feedback');
-    if (feedback) {
-        const isColorblind = testState.isColorblind || false;
-        
-        if (correct) {
-            feedback.textContent = '✓ Correct!';
-            feedback.style.color = '#27ae60';
-            
-            if (isColorblind) {
-                feedback.textContent += ` (${trial.color.toUpperCase()})`;
-            }
-        } else {
-            feedback.textContent = `✗ Incorrect (You selected ${selectedColor.toUpperCase()}, correct was ${trial.color.toUpperCase()})`;
-            feedback.style.color = '#e74c3c';
-        }
-        
-        setTimeout(() => {
-            feedback.textContent = '';
-        }, isColorblind ? 1500 : 500); // Give colorblind users more time to read the feedback
-    }
-    
-    // Update progress
-    updateStroopProgress();
-    
-    // Check if should end test
-    const elapsedMinutes = (new Date() - testState.stroopStartTime) / 1000 / 60;
-    const shouldEnd = checkStroopCompletion(elapsedMinutes);
-    
-    if (shouldEnd) {
-        endStroopTest();
-    } else {
-        // Adjust difficulty
-        adjustStroopDifficulty();
-        
-        // Show next trial
-        setTimeout(() => showStroopTrial(), 300);
-    }
-}
-
-function updateStroopProgress() {
-    const countElem = document.getElementById('stroop-count');
-    const accuracyElem = document.getElementById('stroop-accuracy');
-    
-    if (countElem) countElem.textContent = testState.stroopTotal;
-    if (accuracyElem) {
-        const accuracy = testState.stroopTotal > 0 
-            ? Math.round((testState.stroopCorrect / testState.stroopTotal) * 100)
-            : 0;
-        accuracyElem.textContent = accuracy + '%';
-    }
-}
-
-function adjustStroopDifficulty() {
-    // Only adjust after at least 10 trials
-    if (testState.stroopTotal < 10) return;
-    
-    // Calculate recent accuracy (last 10 trials)
-    const recentTrials = testState.stroopTrials.slice(-10);
-    const recentCorrect = recentTrials.filter(t => t.correct).length;
-    const recentAccuracy = recentCorrect / recentTrials.length;
-    
-    // Target 70-80% accuracy
-    if (recentAccuracy > 0.85 && testState.stroopDifficulty < 3) {
-        testState.stroopDifficulty++;
-    } else if (recentAccuracy < 0.65 && testState.stroopDifficulty > 1) {
-        testState.stroopDifficulty--;
-    }
-}
-
-function checkStroopCompletion(elapsedMinutes) {
-    // Calculate engagement metrics
-    const avgResponseTime = testState.stroopTrials.length > 0
-        ? testState.stroopTrials.reduce((sum, t) => sum + t.responseTime, 0) / testState.stroopTrials.length
-        : 0;
-    
-    const accuracy = testState.stroopTotal > 0 
-        ? testState.stroopCorrect / testState.stroopTotal
-        : 0;
-    
-    // High engagement: quick responses + good accuracy
-    const isEngaged = avgResponseTime < 2000 && accuracy > 0.6;
-    
-    // End conditions
-    if (elapsedMinutes >= 5) return true; // Max 5 minutes
-    if (elapsedMinutes >= 3 && isEngaged) return true; // Min 3 minutes if engaged
-    if (testState.stroopTotal >= 60 && isEngaged) return true; // At least 60 trials if engaged
-    
-    return false;
-}
-
-function endStroopTest() {
-    // Calculate effectiveness score (1-100)
-    const totalTime = (new Date() - testState.stroopStartTime) / 1000; // seconds
-    const avgResponseTime = testState.stroopTrials.length > 0
-        ? testState.stroopTrials.reduce((sum, t) => sum + t.responseTime, 0) / testState.stroopTrials.length
-        : 3000;
-    
-    const accuracy = testState.stroopTotal > 0 
-        ? testState.stroopCorrect / testState.stroopTotal
-        : 0;
-    
-    // Calculate consistency (standard deviation of response times)
-    const responseTimes = testState.stroopTrials.map(t => t.responseTime);
-    const mean = avgResponseTime;
-    const variance = responseTimes.reduce((sum, rt) => sum + Math.pow(rt - mean, 2), 0) / responseTimes.length;
-    const stdDev = Math.sqrt(variance);
-    const consistency = Math.max(0, 1 - (stdDev / mean)); // 0-1, higher is more consistent
-    
-    // Scoring components (each 0-1)
-    const responseScore = Math.max(0, Math.min(1, 1 - (avgResponseTime / 3000))); // Faster = better, cap at 3s
-    const accuracyScore = Math.min(1, accuracy / 0.75); // Target 75%, max at 100%
-    const engagementScore = Math.min(1, testState.stroopTotal / 50); // Want at least 50 trials
-    const timeScore = Math.min(1, (totalTime / 180)); // Want at least 3 minutes
-    
-    // Weighted effectiveness score
-    testState.stroopEffectivenessScore = Math.round(
-        (responseScore * 0.3 + 
-         accuracyScore * 0.3 + 
-         consistency * 0.2 + 
-         engagementScore * 0.1 + 
-         timeScore * 0.1) * 100
-    );
-    
-    // Show completion message
-    const testArea = document.getElementById('test-area');
-    testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Attention Task Complete!</h2>
-            <p>Thank you for your focus.</p>
-            <p>Now we'll continue with the final memory test.</p>
-        </div>
-    `;
-    
-    setTimeout(() => {
-        startDelayedRecall();
-    }, 3000);
 }
 
 function finishTest() {
