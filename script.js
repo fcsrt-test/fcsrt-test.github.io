@@ -577,6 +577,10 @@ function startMemoryTest() {
     testState.memoryTestStartTime = new Date();
     testState.memoryTestLevel = 1;
     testState.memoryTestScore = 0;
+    testState.memoryTestRounds = 0;
+    testState.memoryTestMistakes = 0;
+    testState.memoryTestMinRounds = 10;
+    testState.memoryTestMaxRounds = 14;
     
     const testArea = document.getElementById('test-area');
     testArea.innerHTML = `
@@ -595,6 +599,7 @@ function startMemoryTest() {
             <div id="memory-feedback" style="min-height: 30px; margin: 20px 0; font-size: 18px; font-weight: bold;"></div>
             
             <div id="memory-progress" style="margin: 30px auto; padding: 20px; background: #f8f9fa; border-radius: 8px; max-width: 300px;">
+                <p><strong>Round:</strong> <span id="memory-round">1</span>/<span id="memory-total-rounds">10-14</span></p>
                 <p><strong>Level:</strong> <span id="memory-level">1</span></p>
                 <p><strong>Score:</strong> <span id="memory-score">0</span></p>
             </div>
@@ -625,6 +630,16 @@ function startNewRound() {
     // Hide input while showing sequence
     document.getElementById('input-container').style.display = 'none';
     
+    // Update round display
+    const roundDisplay = document.getElementById('memory-round');
+    const totalRoundsDisplay = document.getElementById('memory-total-rounds');
+    if (roundDisplay) roundDisplay.textContent = testState.memoryTestRounds + 1;
+    if (totalRoundsDisplay) {
+        totalRoundsDisplay.textContent = testState.memoryTestMistakes === 0 ? 
+            testState.memoryTestMaxRounds : 
+            testState.memoryTestMinRounds;
+    }
+    
     // Hide sequence and show input after delay
     setTimeout(() => {
         display.textContent = '?'.repeat(length);
@@ -638,26 +653,39 @@ function checkSequence() {
     const feedback = document.getElementById('memory-feedback');
     const userInput = input.value;
     
+    // Increment round counter
+    testState.memoryTestRounds++;
+    
     if (userInput === testState.currentSequence) {
-        // Correct
+        // Correct answer
         testState.memoryTestScore += testState.memoryTestLevel * 10;
         testState.memoryTestLevel++;
         feedback.textContent = '✓ Correct!';
         feedback.style.color = '#27ae60';
-        
-        // Update score and level
-        document.getElementById('memory-level').textContent = testState.memoryTestLevel;
-        document.getElementById('memory-score').textContent = testState.memoryTestScore;
-        
-        // Start next round after delay
-        setTimeout(startNewRound, 1000);
     } else {
-        // Incorrect
+        // Incorrect answer
+        testState.memoryTestMistakes++;
         feedback.textContent = `Incorrect. The sequence was: ${testState.currentSequence}`;
         feedback.style.color = '#e74c3c';
-        
-        // End test after delay
-        setTimeout(endMemoryTest, 2000);
+    }
+    
+    // Update UI
+    document.getElementById('memory-level').textContent = testState.memoryTestLevel;
+    document.getElementById('memory-score').textContent = testState.memoryTestScore;
+    document.getElementById('memory-round').textContent = Math.min(testState.memoryTestRounds + 1, testState.memoryTestMaxRounds);
+    
+    // Check if we should continue or end the test
+    const minRoundsComplete = testState.memoryTestRounds >= testState.memoryTestMinRounds;
+    const maxRoundsReached = testState.memoryTestRounds >= testState.memoryTestMaxRounds;
+    const perfectSoFar = testState.memoryTestMistakes === 0;
+    
+    if ((minRoundsComplete && !perfectSoFar) || maxRoundsReached) {
+        // End test if we've reached the minimum rounds with at least one mistake,
+        // or if we've reached the maximum number of rounds
+        setTimeout(endMemoryTest, 1000);
+    } else {
+        // Continue to next round
+        setTimeout(startNewRound, 1000);
     }
 }
 
