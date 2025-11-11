@@ -1,20 +1,146 @@
 /* gotta change smth */
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background-color: #f5f5f5;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
 }
 
 #welcome-screen {
-    max-width: 600px;
-    margin: 0 auto;
+    max-width: 800px;
+    margin: 20px auto;
     background: white;
     padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     text-align: center;
+}
+
+/* Memory Test Interface */
+.memory-test-interface {
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+#number-display {
+    font-family: 'Courier New', monospace;
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 0.5rem;
+    margin: 30px 0;
+    padding: 25px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#input-container {
+    margin: 30px 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+#number-input {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    padding: 15px 20px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    transition: border-color 0.3s;
+}
+
+#number-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+#submit-sequence {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+#submit-sequence:hover {
+    background: #2980b9;
+}
+
+#submit-sequence:active {
+    transform: translateY(2px);
+}
+
+#memory-feedback {
+    min-height: 30px;
+    margin: 20px 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+#memory-progress {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 30px auto;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+#memory-progress p {
+    margin: 10px 0;
+    font-size: 1.1rem;
+}
+
+#memory-progress span {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #welcome-screen, .memory-test-interface {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    #number-display {
+        font-size: 2rem;
+        padding: 20px 15px;
+        min-height: 100px;
+    }
+    
+    #input-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #number-input, #submit-sequence {
+        width: 100%;
+        max-width: 100%;
+    }
 }
 
 /* Returning User Screen Styles */
