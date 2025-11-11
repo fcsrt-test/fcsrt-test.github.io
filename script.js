@@ -172,7 +172,7 @@ function initializeWordSets() {
     
     // Set the first word set as active
     testState.currentWordSet = 0;
-    testState.studyWords = [...testState.wordSets[testState.currentWordSet]];
+    testState.studyWords = testState.wordSets[testState.currentWordSet].words;
 }
 
 function selectRandomWords() {
@@ -185,7 +185,7 @@ function selectRandomWords() {
     const currentWordSet = testState.wordSets[testState.currentWordSet];
     
     // Return the current word set
-    return currentWordSet;
+    return currentWordSet.words;
 }
 
 function showDemographicsScreen() {
@@ -297,8 +297,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (submitUserIdBtn) {
         submitUserIdBtn.addEventListener('click', handleUserIdSubmit);
     }
-    
-    showReturningUserScreen();
 });
 
 function showReturningUserScreen() {
