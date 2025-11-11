@@ -44,24 +44,91 @@ let testState = {
 };
 
 let WORD_DATABASE = null;
-//gotta change smth
 
 // Load word bank from JSON file
 async function loadWordBank() {
     try {
         const response = await fetch('words.json');
-        WORD_DATABASE = await response.json();
-        console.log('Word bank loaded successfully');
+        const data = await response.json();
+        
+        // Store both native and non-native word banks
+        WORD_DATABASE = data;
+        
+        // Default to native word bank initially
+        testState.wordBank = 'native';
+        
+        // Initialize word sets
+        initializeWordSets();
     } catch (error) {
-        console.error('Failed to load word bank:', error);
-        // Fallback word bank in case JSON fails to load
+        console.error('Error loading word bank:', error);
+        // Fallback to a default word bank if loading fails
         WORD_DATABASE = {
-            animal: ['dog', 'cat', 'elephant', 'tiger', 'lion', 'bear', 'wolf', 'rabbit'],
-            tool: ['hammer', 'screwdriver', 'wrench', 'saw', 'drill', 'pliers', 'chisel', 'file'],
-            furniture: ['chair', 'table', 'sofa', 'bed', 'desk', 'bookshelf', 'dresser', 'cabinet'],
-            clothing: ['shirt', 'pants', 'shoes', 'hat', 'jacket', 'socks', 'dress', 'sweater']
+            "native": {
+                "animal": ["dog", "cat", "bird", "fish", "frog"],
+                "tool": ["hammer", "saw", "knife", "brush", "ruler"],
+                "furniture": ["chair", "table", "sofa", "bed", "desk"],
+                "clothing": ["shirt", "pants", "shoes", "socks", "hat"]
+            },
+            "nonNative": {
+                "animal": ["dog", "cat", "bird", "fish", "frog"],
+                "tool": ["hammer", "saw", "knife", "brush", "ruler"],
+                "furniture": ["chair", "table", "sofa", "bed", "desk"],
+                "clothing": ["shirt", "pants", "shoes", "socks", "hat"]
+            }
         };
+        testState.wordBank = 'native';
+        initializeWordSets();
     }
+}
+
+function initializeWordSets() {
+    // Clear any existing words
+    testState.wordSets = [];
+    
+    // Get the appropriate word bank based on user's language preference
+    const wordBank = WORD_DATABASE[testState.wordBank] || WORD_DATABASE.native;
+    
+    // Get all categories from the selected word bank
+    const categories = Object.keys(wordBank);
+    
+    // Create 3 sets of words (one for each learning trial)
+    for (let set = 0; set < 3; set++) {
+        const wordSet = [];
+        const usedWords = new Set();
+        
+        // Select 4 categories for this set
+        const selectedCategories = [...categories].sort(() => 0.5 - Math.random()).slice(0, 4);
+        
+        // Select 4 words from each selected category
+        for (const category of selectedCategories) {
+            // Filter out words that have already been used
+            const availableWords = wordBank[category].filter(word => !usedWords.has(word));
+            
+            // If we don't have enough unique words, just take what we have
+            const wordsToAdd = availableWords.length >= 4 
+                ? availableWords.sort(() => 0.5 - Math.random()).slice(0, 4)
+                : availableWords;
+            
+            // Add words to the set
+            wordsToAdd.forEach(word => {
+                wordSet.push({
+                    word: word,
+                    category: category,
+                    set: set + 1, // 1-based set number
+                    learned: false,
+                    attempts: 0
+                });
+                usedWords.add(word);
+            });
+        }
+        
+        // Shuffle the word set
+        testState.wordSets.push(wordSet.sort(() => 0.5 - Math.random()));
+    }
+    
+    // Set the first word set as active
+    testState.currentWordSet = 0;
+    testState.studyWords = [...testState.wordSets[testState.currentWordSet]];
 }
 
 function selectRandomWords() {
@@ -70,34 +137,12 @@ function selectRandomWords() {
         return [];
     }
     
-    const categories = Object.keys(WORD_DATABASE);
-    const selectedWords = [];
+    // Get the current word set
+    const currentWordSet = testState.wordSets[testState.currentWordSet];
     
-    // Create 4 sets of 4 words (one from each category per set)
-    for (let set = 0; set < 4; set++) {
-        const setWords = [];
-        categories.forEach(category => {
-            const availableWords = WORD_DATABASE[category].filter(word => 
-                !selectedWords.some(w => w.word === word)
-            );
-            const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-            setWords.push({
-                word: randomWord,
-                category: category,
-                set: set,
-                learned: false,
-                attempts: 0
-            });
-        });
-        
-        // Shuffle words within the set
-        setWords.sort(() => 0.5 - Math.random());
-        selectedWords.push(...setWords);
-    }
-    
-    return selectedWords;
+    // Return the current word set
+    return currentWordSet;
 }
-
 
 function showDemographicsScreen() {
     document.getElementById('welcome-screen').style.display = 'none';
@@ -151,6 +196,12 @@ function handleDemographicsSubmit(e) {
         isColorblind: isColorblind,
         testDate: new Date().toISOString()
     };
+    
+    // Set appropriate word bank based on language proficiency
+    testState.wordBank = nativeEnglish === 'yes' ? 'native' : 'nonNative';
+    
+    // Reinitialize word sets with the correct word bank
+    initializeWordSets();
     
     // Hide the form
     document.getElementById('demographics-form').style.display = 'none';
