@@ -1,18 +1,18 @@
 {
   "native": {
-    "animal": ["dog", "cat", "bird", "fish", "frog", "bear", "deer", "goat", "lion", "wolf", "duck", "goose", "sheep", "whale", "shark", "eagle", "zebra", "panda", "koala", "puppy"],
-    "tool": ["hammer", "saw", "knife", "brush", "ruler", "glue", "tape", "scissors", "pencil", "eraser", "crayon", "paper", "stapler", "clamp", "ladder", "light", "clock", "radio", "phone", "camera"],
-    "furniture": ["chair", "table", "sofa", "bed", "desk", "shelf", "bench", "stool", "couch", "light", "clock", "mirror", "rug", "lamp", "plant", "frame", "clock", "vase", "mat", "basket"],
-    "clothing": ["shirt", "pants", "shoes", "socks", "dress", "skirt", "shorts", "jeans", "sweater", "jacket", "scarf", "gloves", "boots", "sneakers", "slippers", "cap", "hat", "vest", "tie", "belt"],
-    "food": ["apple", "bread", "cheese", "milk", "juice", "pizza", "salad", "soup", "rice", "pasta", "chicken", "beef", "fish", "eggs", "cake", "candy", "chips", "cookies", "donut", "fries"],
-    "nature": ["tree", "flower", "grass", "water", "stone", "river", "mountain", "beach", "cloud", "rain", "snow", "wind", "sun", "moon", "star", "leaf", "bush", "rock", "sand", "dirt"]
+    "animal": ["dog", "cat", "bird", "fish", "frog", "bear", "lion", "duck", "sheep", "whale", "shark", "eagle", "zebra", "panda", "koala"],
+    "tool": ["hammer", "saw", "knife", "brush", "ruler", "glue", "tape", "scissors", "pencil", "eraser", "crayon", "paper", "stapler", "ladder", "lamp"],
+    "furniture": ["chair", "table", "bed", "desk", "shelf", "couch", "lamp", "mirror", "rug", "clock"],
+    "clothing": ["shirt", "pants", "shoes", "socks", "dress", "skirt", "shorts", "jeans", "jacket", "hat"],
+    "food": ["apple", "bread", "cheese", "milk", "juice", "pizza", "rice", "chicken", "cake", "cookie"],
+    "nature": ["tree", "flower", "grass", "water", "river", "mountain", "beach", "sun", "moon", "star"]
   },
   "nonNative": {
-    "animal": ["dog", "cat", "bird", "fish", "frog", "bear", "deer", "goat", "lion", "wolf", "duck", "goose", "sheep", "whale", "shark", "eagle", "zebra", "panda", "koala", "puppy"],
-    "tool": ["hammer", "saw", "knife", "brush", "ruler", "glue", "tape", "scissors", "pencil", "eraser", "crayon", "paper", "stapler", "clamp", "ladder", "light", "clock", "radio", "phone", "camera"],
-    "furniture": ["chair", "table", "sofa", "bed", "desk", "shelf", "bench", "stool", "couch", "light", "clock", "mirror", "rug", "lamp", "plant", "frame", "clock", "vase", "mat", "basket"],
-    "clothing": ["shirt", "pants", "shoes", "socks", "dress", "skirt", "shorts", "jeans", "sweater", "jacket", "scarf", "gloves", "boots", "sneakers", "slippers", "cap", "hat", "vest", "tie", "belt"],
-    "food": ["apple", "bread", "cheese", "milk", "juice", "pizza", "salad", "soup", "rice", "pasta", "chicken", "beef", "fish", "eggs", "cake", "candy", "chips", "cookies", "donut", "fries"],
-    "nature": ["tree", "flower", "grass", "water", "stone", "river", "mountain", "beach", "cloud", "rain", "snow", "wind", "sun", "moon", "star", "leaf", "bush", "rock", "sand", "dirt"]
+    "animal": ["dog", "cat", "bird", "fish", "bear", "lion", "duck", "sheep", "panda", "koala"],
+    "tool": ["hammer", "knife", "brush", "ruler", "glue", "tape", "scissors", "pencil", "paper", "lamp"],
+    "furniture": ["chair", "table", "bed", "desk", "couch", "lamp"],
+    "clothing": ["shirt", "pants", "shoes", "socks", "dress", "hat"],
+    "food": ["apple", "bread", "milk", "juice", "pizza", "cake"],
+    "nature": ["tree", "flower", "water", "sun", "moon", "star"]
   }
 }
