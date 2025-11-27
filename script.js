@@ -1,14 +1,21 @@
+// Helper to ensure only one primary screen is visible
+function showOnly(targetId) {
+    const screens = [
+        'welcome-screen',
+        'returning-user-screen',
+        'user-id-screen',
+        'demographics-screen',
+        'test-area'
+    ];
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = (id === targetId) ? 'block' : 'none';
+    });
+}
+
 function showWelcomeScreen() {
-    const welcome = document.getElementById('welcome-screen');
-    const returning = document.getElementById('returning-user-screen');
-    const userId = document.getElementById('user-id-screen');
-    const demo = document.getElementById('demographics-screen');
-    const testArea = document.getElementById('test-area');
-    if (returning) returning.style.display = 'none';
-    if (userId) userId.style.display = 'none';
-    if (demo) demo.style.display = 'none';
-    if (testArea) testArea.style.display = 'none';
-    if (welcome) welcome.style.display = 'block';
+    showOnly('welcome-screen');
 }
 let testState = {
     currentSet: 0,
@@ -341,47 +348,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showReturningUserScreen() {
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const returningUserScreen = document.getElementById('returning-user-screen');
-    const userIdScreen = document.getElementById('user-id-screen');
-    const demographicsScreen = document.getElementById('demographics-screen');
-    const testArea = document.getElementById('test-area');
-    if (!welcomeScreen || !returningUserScreen) {
-        console.error('Screen elements not found:', { welcomeScreen: !!welcomeScreen, returningUserScreen: !!returningUserScreen });
-        return;
-    }
-    // Hide all other screens before showing returning-user
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
-    if (userIdScreen) userIdScreen.style.display = 'none';
-    if (demographicsScreen) demographicsScreen.style.display = 'none';
-    if (testArea) testArea.style.display = 'none';
-    returningUserScreen.style.display = 'block';
+    showOnly('returning-user-screen');
 }
 
 function showUserIdScreen() {
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const returningUserScreen = document.getElementById('returning-user-screen');
-    const userIdScreen = document.getElementById('user-id-screen');
-    const demographicsScreen = document.getElementById('demographics-screen');
-    const testArea = document.getElementById('test-area');
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
-    if (returningUserScreen) returningUserScreen.style.display = 'none';
-    if (demographicsScreen) demographicsScreen.style.display = 'none';
-    if (testArea) testArea.style.display = 'none';
-    if (userIdScreen) userIdScreen.style.display = 'block';
+    showOnly('user-id-screen');
 }
 
 function showDemographicsScreen() {
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const returningUserScreen = document.getElementById('returning-user-screen');
-    const userIdScreen = document.getElementById('user-id-screen');
-    const demographicsScreen = document.getElementById('demographics-screen');
-    const testArea = document.getElementById('test-area');
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
-    if (returningUserScreen) returningUserScreen.style.display = 'none';
-    if (userIdScreen) userIdScreen.style.display = 'none';
-    if (testArea) testArea.style.display = 'none';
-    if (demographicsScreen) demographicsScreen.style.display = 'block';
+    showOnly('demographics-screen');
 }
 
 async function handleUserIdSubmit() {
@@ -429,14 +404,8 @@ async function handleUserIdSubmit() {
 }
 
 function startTest() {
-    // Hide all other screens
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('returning-user-screen').style.display = 'none';
-    document.getElementById('user-id-screen').style.display = 'none';
-    document.getElementById('demographics-screen').style.display = 'none';
-    
-    // Show test area
-    document.getElementById('test-area').style.display = 'block';
+    // Show test area only
+    showOnly('test-area');
     
     // Initialize test
     testState.studyWords = selectRandomWords();
