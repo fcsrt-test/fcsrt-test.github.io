@@ -1,3 +1,15 @@
+function showWelcomeScreen() {
+    const welcome = document.getElementById('welcome-screen');
+    const returning = document.getElementById('returning-user-screen');
+    const userId = document.getElementById('user-id-screen');
+    const demo = document.getElementById('demographics-screen');
+    const testArea = document.getElementById('test-area');
+    if (returning) returning.style.display = 'none';
+    if (userId) userId.style.display = 'none';
+    if (demo) demo.style.display = 'none';
+    if (testArea) testArea.style.display = 'none';
+    if (welcome) welcome.style.display = 'block';
+}
 let testState = {
     currentSet: 0,
     currentWordInSet: 0,
@@ -274,6 +286,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const yesReturningBtn = document.getElementById('yes-returning');
     const noReturningBtn = document.getElementById('no-returning');
     const submitUserIdBtn = document.getElementById('submit-user-id');
+    const backToWelcomeBtn = document.getElementById('back-to-welcome');
+    const backToReturningUserBtn = document.getElementById('back-to-returning-user');
+    const backToReturningFromDemoBtn = document.getElementById('back-to-returning-from-demo');
     
     if (beginTestButton) {
         beginTestButton.addEventListener('click', (e) => {
@@ -300,6 +315,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     if (submitUserIdBtn) {
         submitUserIdBtn.addEventListener('click', handleUserIdSubmit);
+    }
+
+    if (backToWelcomeBtn) {
+        backToWelcomeBtn.addEventListener('click', (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            showWelcomeScreen();
+        });
+    }
+
+    if (backToReturningUserBtn) {
+        backToReturningUserBtn.addEventListener('click', (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            showReturningUserScreen();
+        });
+    }
+
+    if (backToReturningFromDemoBtn) {
+        backToReturningFromDemoBtn.addEventListener('click', (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            showReturningUserScreen();
+        });
     }
 });
 
