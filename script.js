@@ -278,9 +278,7 @@ function handleDemographicsSubmit(e) {
 }
 
 // Initialize the test when DOM is loaded
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadWordBank();
-    
+document.addEventListener('DOMContentLoaded', function() {
     const beginTestButton = document.getElementById('begin-test');
     const demographicsForm = document.getElementById('demographics-form');
     const yesReturningBtn = document.getElementById('yes-returning');
@@ -337,6 +335,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             showReturningUserScreen();
         });
     }
+    
+    // Load word data in the background so UI remains responsive
+    loadWordBank().catch(err => console.error('loadWordBank failed:', err));
 });
 
 function showReturningUserScreen() {

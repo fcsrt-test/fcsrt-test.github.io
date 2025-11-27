@@ -186,6 +186,24 @@ body {
 }
 
 /* Returning User Screen Styles */
+.back-arrow {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: transparent;
+    border: none;
+    color: #7f8c8d;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.back-arrow:hover {
+    background: #f0f3f4;
+}
+
 #returning-user-screen, #user-id-screen {
     max-width: 600px;
     margin: 0 auto;
@@ -194,6 +212,7 @@ body {
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     text-align: center;
+    position: relative;
 }
 
 #returning-user-screen h2, #user-id-screen h2 {
@@ -252,6 +271,7 @@ body {
     padding: 40px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
 }
 
 #demographics-screen h1 {
