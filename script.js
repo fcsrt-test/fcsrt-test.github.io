@@ -343,22 +343,45 @@ document.addEventListener('DOMContentLoaded', function() {
 function showReturningUserScreen() {
     const welcomeScreen = document.getElementById('welcome-screen');
     const returningUserScreen = document.getElementById('returning-user-screen');
+    const userIdScreen = document.getElementById('user-id-screen');
+    const demographicsScreen = document.getElementById('demographics-screen');
+    const testArea = document.getElementById('test-area');
     if (!welcomeScreen || !returningUserScreen) {
         console.error('Screen elements not found:', { welcomeScreen: !!welcomeScreen, returningUserScreen: !!returningUserScreen });
         return;
     }
-    welcomeScreen.style.display = 'none';
+    // Hide all other screens before showing returning-user
+    if (welcomeScreen) welcomeScreen.style.display = 'none';
+    if (userIdScreen) userIdScreen.style.display = 'none';
+    if (demographicsScreen) demographicsScreen.style.display = 'none';
+    if (testArea) testArea.style.display = 'none';
     returningUserScreen.style.display = 'block';
 }
 
 function showUserIdScreen() {
-    document.getElementById('returning-user-screen').style.display = 'none';
-    document.getElementById('user-id-screen').style.display = 'block';
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const returningUserScreen = document.getElementById('returning-user-screen');
+    const userIdScreen = document.getElementById('user-id-screen');
+    const demographicsScreen = document.getElementById('demographics-screen');
+    const testArea = document.getElementById('test-area');
+    if (welcomeScreen) welcomeScreen.style.display = 'none';
+    if (returningUserScreen) returningUserScreen.style.display = 'none';
+    if (demographicsScreen) demographicsScreen.style.display = 'none';
+    if (testArea) testArea.style.display = 'none';
+    if (userIdScreen) userIdScreen.style.display = 'block';
 }
 
 function showDemographicsScreen() {
-    document.getElementById('returning-user-screen').style.display = 'none';
-    document.getElementById('demographics-screen').style.display = 'block';
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const returningUserScreen = document.getElementById('returning-user-screen');
+    const userIdScreen = document.getElementById('user-id-screen');
+    const demographicsScreen = document.getElementById('demographics-screen');
+    const testArea = document.getElementById('test-area');
+    if (welcomeScreen) welcomeScreen.style.display = 'none';
+    if (returningUserScreen) returningUserScreen.style.display = 'none';
+    if (userIdScreen) userIdScreen.style.display = 'none';
+    if (testArea) testArea.style.display = 'none';
+    if (demographicsScreen) demographicsScreen.style.display = 'block';
 }
 
 async function handleUserIdSubmit() {
