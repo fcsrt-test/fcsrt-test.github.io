@@ -276,7 +276,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     const submitUserIdBtn = document.getElementById('submit-user-id');
     
     if (beginTestButton) {
-        beginTestButton.addEventListener('click', showReturningUserScreen);
+        beginTestButton.addEventListener('click', (e) => {
+            try {
+                if (e && typeof e.preventDefault === 'function') e.preventDefault();
+                showReturningUserScreen();
+            } catch (err) {
+                console.error('Failed to start test flow:', err);
+            }
+        });
     }
     
     if (demographicsForm) {
@@ -299,11 +306,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 function showReturningUserScreen() {
     const welcomeScreen = document.getElementById('welcome-screen');
     const returningUserScreen = document.getElementById('returning-user-screen');
-    
-    if (welcomeScreen && returningUserScreen) {
-        welcomeScreen.style.display = 'none';
-        returningUserScreen.style.display = 'block';
+    if (!welcomeScreen || !returningUserScreen) {
+        console.error('Screen elements not found:', { welcomeScreen: !!welcomeScreen, returningUserScreen: !!returningUserScreen });
+        return;
     }
+    welcomeScreen.style.display = 'none';
+    returningUserScreen.style.display = 'block';
 }
 
 function showUserIdScreen() {
