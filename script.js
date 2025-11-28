@@ -111,8 +111,9 @@ function initializeWordSets() {
     // Get all categories from the selected word bank
     const categories = Object.keys(wordBank);
     
-    // Create 3 sets of words (one for each learning trial)
-    for (let set = 0; set < 3; set++) {
+    // Create exactly one set of 16 words (4 categories × 4 words)
+    const totalSets = 1;
+    for (let set = 0; set < totalSets; set++) {
         const wordSet = [];
         const usedWords = new Set();
         
@@ -191,7 +192,7 @@ function initializeWordSets() {
     
     // Set the first word set as active
     testState.currentWordSet = 0;
-    testState.studyWords = testState.wordSets[testState.currentWordSet].words;
+    testState.studyWords = testState.wordSets[0].words;
 }
 
 function selectRandomWords() {
@@ -1315,11 +1316,13 @@ function updateDevControls() {
     
     // Update status
     const status = devPanel.querySelector('#dev-status');
+    const totalSets = testState.wordSets ? testState.wordSets.length : 1;
+    const totalWords = testState.studyWords ? testState.studyWords.length : 16;
     status.innerHTML = `
         <div><strong>Phase:</strong> ${testState.currentPhase}</div>
-        <div><strong>Set:</strong> ${testState.currentSet + 1}/4</div>
+        <div><strong>Set:</strong> ${Math.min(testState.currentSet + 1, totalSets)}/${totalSets}</div>
         <div><strong>Trial:</strong> ${testState.recallTrial + 1}</div>
-        <div><strong>Learned:</strong> ${testState.studyWords ? testState.studyWords.filter(w => w.learned).length : 0}/16</div>
+        <div><strong>Learned:</strong> ${testState.studyWords ? testState.studyWords.filter(w => w.learned).length : 0}/${totalWords}</div>
     `;
 }
 
