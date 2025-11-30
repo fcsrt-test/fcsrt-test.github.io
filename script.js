@@ -17,6 +17,31 @@ function showOnly(targetId) {
 function showWelcomeScreen() {
     showOnly('welcome-screen');
 }
+
+function updateParticipantIdDisplay() {
+    const persistentBanner = document.getElementById('persistent-user-id');
+    const resultsId = document.getElementById('results-user-id');
+    const demographicsDisplay = document.getElementById('display-user-id');
+    const userId = testState.userId || '';
+    
+    if (demographicsDisplay) {
+        demographicsDisplay.textContent = userId;
+    }
+    
+    if (persistentBanner) {
+        if (userId) {
+            persistentBanner.textContent = `Participant ID: ${userId}`;
+            persistentBanner.style.display = 'block';
+        } else {
+            persistentBanner.textContent = '';
+            persistentBanner.style.display = 'none';
+        }
+    }
+    
+    if (resultsId) {
+        resultsId.textContent = userId;
+    }
+}
 let testState = {
     currentSet: 0,
     currentWordInSet: 0,
@@ -287,6 +312,7 @@ function handleDemographicsSubmit(e) {
     
     // Add event listener to the Begin Test button
     document.getElementById('begin-test-button').addEventListener('click', startTest);
+    updateParticipantIdDisplay();
 }
 
 // Initialize the test when DOM is loaded
@@ -379,6 +405,7 @@ async function handleUserIdSubmit() {
         if (data.exists) {
             testState.userId = userId;
             testState.demographics = data.demographics;
+            updateParticipantIdDisplay();
             
             // Hide user ID screen and show test area
             document.getElementById('user-id-screen').style.display = 'none';
@@ -411,6 +438,7 @@ async function handleUserIdSubmit() {
 function startTest() {
     // Show test area only
     showOnly('test-area');
+    updateParticipantIdDisplay();
     
     // Initialize test
     testState.studyWords = selectRandomWords();
@@ -452,7 +480,6 @@ function showStudyItem() {
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
     const progressElement = document.getElementById('study-progress');
-    const progressLabel = document.getElementById('study-progress-label');
     
     // Update progress
     const totalLearned = testState.studyWords.filter(w => w.learned).length;
@@ -460,9 +487,6 @@ function showStudyItem() {
     const progress = (totalLearned / totalWords) * 100;
     const progressBar = progressElement.querySelector('.progress-bar');
     progressBar.style.width = progress + '%';
-    if (progressLabel) {
-        progressLabel.textContent = `Card ${currentCardNumber} of ${totalCards} • ${totalLearned}/${totalWords} words learned`;
-    }
     
     // Show cue for target word's category
     cueElement.textContent = `Which one is ${'aeiou'.includes(targetWord.category[0].toLowerCase()) ? 'an' : 'a'} ${targetWord.category}?`;
@@ -1035,6 +1059,10 @@ function finishTest() {
     testArea.innerHTML = `
         <div class="results-display">
             <h2>Test Complete!</h2>
+            <div class="results-user-id">
+                <span><strong>Participant ID:</strong> <span id="results-user-id">${testState.userId || ''}</span></span>
+                <button id="copy-user-id" class="btn btn-secondary" type="button">Copy ID</button>
+            </div>
             <div class="results-summary">
                 <h3>Results Summary</h3>
                 <p><strong>Test Duration:</strong> ${duration} minutes</p>
@@ -1063,6 +1091,26 @@ function finishTest() {
             </div>
         </div>
     `;
+    updateParticipantIdDisplay();
+    const copyBtn = document.getElementById('copy-user-id');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            if (!testState.userId) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(testState.userId).then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy ID';
+                    }, 2000);
+                }).catch(() => {
+                    copyBtn.textContent = 'Copy Failed';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy ID';
+                    }, 2000);
+                });
+            }
+        });
+    }
     
     // Automatically upload results
     uploadResults();
