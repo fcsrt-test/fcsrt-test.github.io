@@ -188,11 +188,15 @@ function initializeWordSets() {
             cards: cards,
             currentCard: 0
         });
+        
+        // Track number of cards for study progression
+        const cardCount = wordSet.reduce((max, word) => Math.max(max, word.card || 0), 0);
+        testState.totalCards = cardCount || 4;
     }
     
     // Set the first word set as active
     testState.currentWordSet = 0;
-    testState.studyWords = testState.wordSets[0].words;
+    testState.studyWords = testState.wordSets[testState.currentWordSet].words;
 }
 
 function selectRandomWords() {
@@ -422,57 +426,40 @@ function startStudyPhase() {
     testState.currentSet = 0;
     testState.learnedInCurrentSet = 0;
     testState.currentPhase = 'study';
+    testState.currentCardIndex = 0;
     showStudyItem();
 }
 
 function showStudyItem() {
-    const currentSetObj = testState.wordSets[testState.currentSet];
-    const currentCard = currentSetObj.cards[currentSetObj.currentCard];
-    
-    // If all words in this card are learned, move to the next card
-    const unlearnedWords = currentCard.words.filter(word => !word.learned);
+    const totalCards = testState.totalCards || 4;
+    const currentCardNumber = (testState.currentCardIndex || 0) + 1;
+    const currentWords = testState.studyWords.filter(word => word.card === currentCardNumber);
+    const unlearnedWords = currentWords.filter(word => !word.learned);
     
     if (unlearnedWords.length === 0) {
-        // Mark this card as complete
-        currentCard.isComplete = true;
-        
-        // Move to next card or next set
-        if (currentSetObj.currentCard < currentSetObj.cards.length - 1) {
-            // Move to next card in current set
-            currentSetObj.currentCard++;
-        } else {
-            // Move to next set or end study phase
-            testState.currentSet++;
-            if (testState.currentSet >= testState.wordSets.length) {
-                console.log('Study phase complete');
-                // Transition to recall phase
-                startRecallPhase();
-                return;
-            } else {
-                // Reset to first card of next set
-                testState.wordSets[testState.currentSet].currentCard = 0;
-            }
+        testState.currentCardIndex++;
+        if (testState.currentCardIndex >= totalCards) {
+            console.log('Study phase complete');
+            startRecallPhase();
+            return;
         }
-        // Show the next card
         showStudyItem();
         return;
     }
     
-    // Get the current card's words
-    const currentWords = currentCard.words;
-    const targetWord = unlearnedWords[0]; // Always target the first unlearned word in the card
+    const targetWord = unlearnedWords[Math.floor(Math.random() * unlearnedWords.length)];
     
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
     const progressElement = document.getElementById('study-progress');
     
     // Update progress
-    const totalLearned = testState.wordSets.flatMap(s => s.words).filter(w => w.learned).length;
-    const totalWords = testState.wordSets.reduce((sum, set) => sum + set.words.length, 0);
+    const totalLearned = testState.studyWords.filter(w => w.learned).length;
+    const totalWords = testState.studyWords.length;
     const progress = (totalLearned / totalWords) * 100;
     const progressBar = progressElement.querySelector('.progress-bar');
     progressBar.style.width = progress + '%';
-    progressBar.textContent = `Set ${testState.currentSet + 1}, Card ${currentSetObj.currentCard + 1}: ${totalLearned}/${totalWords} words`;
+    progressBar.textContent = `Card ${currentCardNumber} of ${totalCards}: ${totalLearned}/${totalWords} words learned`;
     
     // Show cue for target word's category
     cueElement.textContent = `Which one is ${'aeiou'.includes(targetWord.category[0].toLowerCase()) ? 'an' : 'a'} ${targetWord.category}?`;
@@ -486,6 +473,7 @@ function showStudyItem() {
         const isTarget = wordObj.word === targetWord.word;
         div.className = wordObj.learned ? 'study-item correct' : 'study-item';
         div.textContent = wordObj.word;
+
         
         if (!wordObj.learned) {
             div.onclick = () => selectStudyItem(isTarget, div, wordObj);
