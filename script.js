@@ -99,7 +99,9 @@ async function loadWordBank() {
         WORD_DATABASE = data;
         
         // Default to native word bank initially
-        testState.wordBank = 'native';
+        if (!testState.wordBank) {
+            testState.wordBank = 'native';
+        }
         
         // Initialize word sets
         initializeWordSets();
@@ -120,7 +122,9 @@ async function loadWordBank() {
                 "clothing": ["shirt", "pants", "shoes", "socks", "hat"]
             }
         };
-        testState.wordBank = 'native';
+        if (!testState.wordBank) {
+            testState.wordBank = 'native';
+        }
         initializeWordSets();
     }
 }
@@ -230,10 +234,19 @@ function selectRandomWords() {
         return [];
     }
     
-    // Get the current word set
-    const currentWordSet = testState.wordSets[testState.currentWordSet];
+    if (!testState.wordSets || testState.wordSets.length === 0) {
+        console.warn('Word sets not initialized. Reinitializing now.');
+        initializeWordSets();
+    }
     
-    // Return the current word set
+    const setIndex = testState.currentWordSet || 0;
+    const currentWordSet = testState.wordSets[setIndex];
+    
+    if (!currentWordSet || !Array.isArray(currentWordSet.words)) {
+        console.error('Current word set is unavailable.');
+        return [];
+    }
+    
     return currentWordSet.words;
 }
 
@@ -404,12 +417,32 @@ async function handleUserIdSubmit() {
         
         if (data.exists) {
             testState.userId = userId;
-            testState.demographics = data.demographics;
+            testState.demographics = data.demographics || {};
+
+            const nativeEnglish = testState.demographics.nativeEnglish;
+            if (nativeEnglish === 'Y') {
+                testState.wordBank = 'native';
+            } else if (nativeEnglish === 'N') {
+                testState.wordBank = 'nonNative';
+            }
+
+            const isColorblind = testState.demographics.isColorblind === true || testState.demographics.isColorblind === 'Y';
+            testState.isColorblind = isColorblind;
+            if (isColorblind) {
+                document.body.classList.add('colorblind-mode');
+            } else {
+                document.body.classList.remove('colorblind-mode');
+            }
+
             updateParticipantIdDisplay();
-            
-            // Hide user ID screen and show test area
-            document.getElementById('user-id-screen').style.display = 'none';
-            document.getElementById('test-area').style.display = 'block';
+
+            if (!WORD_DATABASE) {
+                await loadWordBank();
+            } else {
+                initializeWordSets();
+            }
+
+            showOnly('test-area');
             
             // Show user ID in the interface if there's a display element
             const displayElement = document.getElementById('display-user-id');
