@@ -452,6 +452,7 @@ function showStudyItem() {
     const cueElement = document.getElementById('study-cue');
     const gridElement = document.getElementById('study-grid');
     const progressElement = document.getElementById('study-progress');
+    const progressLabel = document.getElementById('study-progress-label');
     
     // Update progress
     const totalLearned = testState.studyWords.filter(w => w.learned).length;
@@ -459,7 +460,9 @@ function showStudyItem() {
     const progress = (totalLearned / totalWords) * 100;
     const progressBar = progressElement.querySelector('.progress-bar');
     progressBar.style.width = progress + '%';
-    progressBar.textContent = `Card ${currentCardNumber} of ${totalCards}: ${totalLearned}/${totalWords} words learned`;
+    if (progressLabel) {
+        progressLabel.textContent = `Card ${currentCardNumber} of ${totalCards} • ${totalLearned}/${totalWords} words learned`;
+    }
     
     // Show cue for target word's category
     cueElement.textContent = `Which one is ${'aeiou'.includes(targetWord.category[0].toLowerCase()) ? 'an' : 'a'} ${targetWord.category}?`;
