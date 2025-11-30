@@ -22,6 +22,7 @@ function updateParticipantIdDisplay() {
     const persistentBanner = document.getElementById('persistent-user-id');
     const resultsId = document.getElementById('results-user-id');
     const demographicsDisplay = document.getElementById('display-user-id');
+    const inlineDisplay = document.getElementById('inline-user-id');
     const userId = testState.userId || '';
     
     if (demographicsDisplay) {
@@ -40,6 +41,16 @@ function updateParticipantIdDisplay() {
     
     if (resultsId) {
         resultsId.textContent = userId;
+    }
+
+    if (inlineDisplay) {
+        if (userId) {
+            inlineDisplay.textContent = `Participant ID: ${userId}`;
+            inlineDisplay.style.display = 'block';
+        } else {
+            inlineDisplay.textContent = '';
+            inlineDisplay.style.display = 'none';
+        }
     }
 }
 let testState = {
@@ -487,6 +498,9 @@ function showStudyItem() {
     const progress = (totalLearned / totalWords) * 100;
     const progressBar = progressElement.querySelector('.progress-bar');
     progressBar.style.width = progress + '%';
+    if (progressBar.textContent) {
+        progressBar.textContent = '';
+    }
     
     // Show cue for target word's category
     cueElement.textContent = `Which one is ${'aeiou'.includes(targetWord.category[0].toLowerCase()) ? 'an' : 'a'} ${targetWord.category}?`;
