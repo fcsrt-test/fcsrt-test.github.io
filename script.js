@@ -22,7 +22,6 @@ function updateParticipantIdDisplay() {
     const persistentBanner = document.getElementById('persistent-user-id');
     const resultsId = document.getElementById('results-user-id');
     const demographicsDisplay = document.getElementById('display-user-id');
-    const inlineDisplay = document.getElementById('inline-user-id');
     const userId = testState.userId || '';
     
     if (demographicsDisplay) {
@@ -41,16 +40,6 @@ function updateParticipantIdDisplay() {
     
     if (resultsId) {
         resultsId.textContent = userId;
-    }
-
-    if (inlineDisplay) {
-        if (userId) {
-            inlineDisplay.textContent = `Participant ID: ${userId}`;
-            inlineDisplay.style.display = 'block';
-        } else {
-            inlineDisplay.textContent = '';
-            inlineDisplay.style.display = 'none';
-        }
     }
 }
 let testState = {
