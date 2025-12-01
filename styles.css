@@ -84,6 +84,16 @@ body {
     display: block;
 }
 
+.screen--interaction {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 24px 0 40px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
 .screen-title {
     margin: 0;
     font-size: 2.1rem;
@@ -92,10 +102,18 @@ body {
     color: var(--color-text);
 }
 
+.screen-title--centered {
+    text-align: center;
+}
+
 .screen-subtitle {
     margin: 0;
     font-size: 1rem;
     color: var(--color-muted);
+}
+
+.screen-subtitle--centered {
+    text-align: center;
 }
 
 .screen-copy {
@@ -398,28 +416,39 @@ textarea {
     color: var(--color-error);
 }
 
+
 .recall-interface {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    text-align: left;
+    gap: 20px;
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+    align-items: center;
 }
 
-.recall-interface h2 {
-    margin: 0;
-    font-size: 1.4rem;
+.recall-textarea {
+    width: 100%;
 }
 
-.recall-interface p {
-    margin: 0;
-    color: var(--color-muted);
+.recall-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
 }
 
-#recalled-words-display {
+.recall-results {
+    width: 100%;
     padding: 18px;
     border-radius: var(--radius-md);
     background: #f4f7ff;
     border: 1px solid rgba(59, 109, 240, 0.15);
+    text-align: left;
+}
+
+.cued-recall-container {
+    width: 100%;
 }
 
 .cued-item {
@@ -436,6 +465,16 @@ textarea {
     min-height: 24px;
     font-weight: 600;
     color: var(--color-muted);
+    text-align: center;
+}
+
+.memory-test-interface {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 680px;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .sequence-display {

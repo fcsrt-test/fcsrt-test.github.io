@@ -601,12 +601,14 @@ function showRecallInterface() {
     if (testState.recallTrial < 3) {
         // Free recall trials
         testArea.innerHTML = `
-            <div class="recall-interface">
-                <h2>Trial ${testState.recallTrial + 1} - Free Recall</h2>
-                <p>Type all the words you remember from the study phase (one word per line):</p>
-                <textarea id="recall-input" placeholder="Enter words, one per line..."></textarea>
-                <button id="recall-submit">Submit</button>
-                <div id="recalled-words-display"></div>
+            <div class="recall-interface recall-interface--free">
+                <h2 class="screen-title screen-title--centered">Trial ${testState.recallTrial + 1} · Free recall</h2>
+                <p class="screen-subtitle screen-subtitle--centered">Type all the words you remember from the study phase (one word per line).</p>
+                <textarea id="recall-input" class="input recall-textarea" placeholder="Enter words, one per line..."></textarea>
+                <div class="recall-actions">
+                    <button id="recall-submit" class="btn btn-primary btn-lg">Submit recall</button>
+                </div>
+                <div id="recalled-words-display" class="recall-results"></div>
             </div>
         `;
         
@@ -659,10 +661,10 @@ function showCuedRecall() {
         
         // Show brief feedback
         testArea.innerHTML = `
-            <div class="recall-interface">
-                <h2>Perfect Recall! ✓</h2>
-                <p>You recalled all words correctly. Cued recall is not needed.</p>
-                <p>Moving to the next trial...</p>
+            <div class="recall-interface recall-interface--feedback">
+                <h2 class="screen-title screen-title--centered">Perfect recall! ✓</h2>
+                <p class="screen-subtitle screen-subtitle--centered">You recalled all words correctly. Cued recall is not needed.</p>
+                <p class="screen-subtitle screen-subtitle--centered">Moving to the next trial...</p>
             </div>
         `;
         
@@ -682,10 +684,10 @@ function showCuedRecall() {
     });
     
     testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Trial ${testState.recallTrial + 1} - Cued Recall</h2>
-            <p>For each category, try to recall any words you remember:</p>
-            <div id="cued-recall-container"></div>
+        <div class="recall-interface recall-interface--cued">
+            <h2 class="screen-title screen-title--centered">Trial ${testState.recallTrial + 1} · Cued recall</h2>
+            <p class="screen-subtitle screen-subtitle--centered">For each category, try to recall any words you remember.</p>
+            <div id="cued-recall-container" class="cued-recall-container"></div>
         </div>
     `;
     
@@ -711,10 +713,12 @@ function showNextCategoryPrompt() {
     
     container.innerHTML = `
         <div class="cued-item">
-            <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <p class="screen-subtitle screen-subtitle--centered">What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line.)</p>
+            <textarea id="cued-input" class="input" placeholder="Enter words, one per line..." rows="4"></textarea>
             <div id="cued-feedback" class="cued-feedback"></div>
-            <textarea id="cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
-            <button id="cued-submit" class="btn btn-primary">Submit</button>
+            <div class="recall-actions">
+                <button id="cued-submit" class="btn btn-primary">Submit</button>
+            </div>
         </div>
     `;
     
@@ -756,6 +760,7 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
     // Show feedback
     const inputElement = document.getElementById('cued-input');
     const feedbackElement = document.getElementById('cued-feedback');
+    const submitButton = document.getElementById('cued-submit');
     
     // Compute the words that are still missed in this category (not recalled in cued recall)
     const stillMissedWords = missedInCategory
@@ -774,18 +779,14 @@ function submitCategoryAnswer(currentCategory, missedInCategory) {
     
     // Disable input and submit button
     inputElement.disabled = true;
-    document.getElementById('cued-submit').disabled = true;
-    
-    // Create Next button
-    const nextButton = document.createElement('button');
-    nextButton.id = 'cued-next';
-    nextButton.textContent = 'Next';
-    nextButton.className = 'btn btn-primary';
-    nextButton.onclick = () => {
+    submitButton.textContent = 'Next';
+    submitButton.classList.remove('btn-primary');
+    submitButton.classList.add('btn-secondary');
+    submitButton.disabled = false;
+    submitButton.onclick = () => {
         testState.currentCuedIndex++;
         showNextCategoryPrompt();
     };
-    feedbackElement.appendChild(nextButton);
 }
 
 function startMemoryTest() {
@@ -799,9 +800,9 @@ function startMemoryTest() {
     
     const testArea = document.getElementById('test-area');
     testArea.innerHTML = `
-        <div class="memory-test-interface panel">
-            <h2 class="screen-title">Memory challenge</h2>
-            <p class="screen-subtitle">Memorize the number sequence, then type it back when prompted.</p>
+        <div class="memory-test-interface">
+            <h2 class="screen-title screen-title--centered">Memory challenge</h2>
+            <p class="screen-subtitle screen-subtitle--centered">Memorize the number sequence, then type it back when prompted.</p>
             
             <div id="number-display" class="sequence-display"></div>
             
@@ -913,10 +914,10 @@ function endMemoryTest() {
     
     const testArea = document.getElementById('test-area');
     testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Memory Challenge Complete!</h2>
-            <p>You reached level ${testState.memoryTestLevel} with a score of ${testState.memoryTestScore}.</p>
-            <p>Now we'll continue with the final memory test.</p>
+        <div class="recall-interface recall-interface--feedback">
+            <h2 class="screen-title screen-title--centered">Memory challenge complete!</h2>
+            <p class="screen-subtitle screen-subtitle--centered">You reached level ${testState.memoryTestLevel} with a score of ${testState.memoryTestScore}.</p>
+            <p class="screen-subtitle screen-subtitle--centered">Now we'll continue with the final memory test.</p>
         </div>
     `;
     
@@ -930,11 +931,13 @@ function startDelayedRecall() {
     
     const testArea = document.getElementById('test-area');
     testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Final Free Recall</h2>
-            <p>Try to remember all the words from the beginning of the test (one word per line):</p>
-            <textarea id="delayed-recall-input" placeholder="Enter words, one per line..."></textarea>
-            <button id="delayed-recall-submit">Submit</button>
+        <div class="recall-interface recall-interface--free">
+            <h2 class="screen-title screen-title--centered">Final free recall</h2>
+            <p class="screen-subtitle screen-subtitle--centered">Try to remember all the words from the beginning of the test (one word per line).</p>
+            <textarea id="delayed-recall-input" class="input recall-textarea" placeholder="Enter words, one per line..."></textarea>
+            <div class="recall-actions">
+                <button id="delayed-recall-submit" class="btn btn-primary btn-lg">Submit recall</button>
+            </div>
         </div>
     `;
     
@@ -982,10 +985,10 @@ function showDelayedCuedRecall() {
         
         // Show brief feedback
         testArea.innerHTML = `
-            <div class="recall-interface">
-                <h2>Perfect Delayed Recall! ✓</h2>
-                <p>You recalled all words correctly. Cued recall is not needed.</p>
-                <p>Finishing test...</p>
+            <div class="recall-interface recall-interface--feedback">
+                <h2 class="screen-title screen-title--centered">Perfect delayed recall! ✓</h2>
+                <p class="screen-subtitle screen-subtitle--centered">You recalled all words correctly. Cued recall is not needed.</p>
+                <p class="screen-subtitle screen-subtitle--centered">Finishing test...</p>
             </div>
         `;
         
@@ -1005,10 +1008,10 @@ function showDelayedCuedRecall() {
     });
     
     testArea.innerHTML = `
-        <div class="recall-interface">
-            <h2>Final Cued Recall</h2>
-            <p>For each category, try to recall any remaining words:</p>
-            <div id="delayed-cued-container"></div>
+        <div class="recall-interface recall-interface--cued">
+            <h2 class="screen-title screen-title--centered">Final cued recall</h2>
+            <p class="screen-subtitle screen-subtitle--centered">For each category, try to recall any remaining words.</p>
+            <div id="delayed-cued-container" class="cued-recall-container"></div>
         </div>
     `;
     
@@ -1033,10 +1036,12 @@ function showNextDelayedCategoryPrompt() {
     
     container.innerHTML = `
         <div class="cued-item">
-            <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <p class="screen-subtitle screen-subtitle--centered">What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
+            <textarea id="delayed-cued-input" class="input" placeholder="Enter words, one per line..." rows="4"></textarea>
             <div id="delayed-cued-feedback" class="cued-feedback"></div>
-            <textarea id="delayed-cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
-            <button id="delayed-cued-submit" class="btn btn-primary">Submit</button>
+            <div class="recall-actions">
+                <button id="delayed-cued-submit" class="btn btn-primary">Submit</button>
+            </div>
         </div>
     `;
     
@@ -1094,7 +1099,7 @@ function finishTest() {
     
     testArea.innerHTML = `
         <div class="results-display panel">
-            <h2 class="screen-title">Test complete</h2>
+            <h2 class="screen-title screen-title--centered">Test complete</h2>
             <div class="results-user-id">
                 <span class="results-user-id__label">Participant ID:</span>
                 <span id="results-user-id" class="results-user-id__value">${testState.userId || ''}</span>
