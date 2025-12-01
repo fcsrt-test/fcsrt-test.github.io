@@ -312,14 +312,14 @@ function handleDemographicsSubmit(e) {
     // Create and show user ID with Begin Test button
     const demographicsScreen = document.getElementById('demographics-screen');
     const messageDiv = document.createElement('div');
-    messageDiv.style.textAlign = 'center';
+    messageDiv.className = 'panel panel--confirmation';
     messageDiv.innerHTML = `
-        <div class="participant-id-display">
-            <p style="font-size: 18px; margin-bottom: 10px;">Your Participant ID:</p>
-            <p style="font-size: 24px; font-weight: bold; color: #27ae60; margin-bottom: 10px;">${testState.userId}</p>
-            <p style="font-size: 14px; color: #155724;">Please save this ID for future sessions.</p>
+        <div class="confirmation">
+            <p class="confirmation__label">Your Participant ID</p>
+            <p class="confirmation__value">${testState.userId}</p>
+            <p class="confirmation__hint">Please save this ID for future sessions.</p>
         </div>
-        <button id="begin-test-button" class="btn btn-primary" style="margin-top: 20px;">Begin Test</button>
+        <button id="begin-test-button" class="btn btn-primary btn-block">Begin test</button>
     `;
     demographicsScreen.appendChild(messageDiv);
     
@@ -712,9 +712,9 @@ function showNextCategoryPrompt() {
     container.innerHTML = `
         <div class="cued-item">
             <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
-            <div id="cued-feedback" style="margin: 5px 0; font-weight: bold;"></div>
+            <div id="cued-feedback" class="cued-feedback"></div>
             <textarea id="cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
-            <button id="cued-submit">Submit</button>
+            <button id="cued-submit" class="btn btn-primary">Submit</button>
         </div>
     `;
     
@@ -799,21 +799,21 @@ function startMemoryTest() {
     
     const testArea = document.getElementById('test-area');
     testArea.innerHTML = `
-        <div class="memory-test-interface" style="text-align: center; padding: 40px;">
-            <h2>Memory Challenge</h2>
-            <p style="margin-bottom: 30px;">Memorize the number sequence, then type it back when prompted.</p>
+        <div class="memory-test-interface panel">
+            <h2 class="screen-title">Memory challenge</h2>
+            <p class="screen-subtitle">Memorize the number sequence, then type it back when prompted.</p>
             
-            <div id="number-display" style="font-size: 48px; font-weight: bold; margin: 40px 0; min-height: 80px; font-family: monospace; letter-spacing: 5px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: inline-block; min-width: 300px;"></div>
+            <div id="number-display" class="sequence-display"></div>
             
-            <div id="input-container" style="display: none; margin: 20px 0;">
-                <input type="text" id="number-input" style="font-family: monospace; letter-spacing: 3px; text-align: center; padding: 15px; font-size: 24px; border: 2px solid #ddd; border-radius: 5px; width: 300px;" 
+            <div id="input-container" class="sequence-input" style="display: none;">
+                <input type="text" id="number-input" class="input sequence-field" 
                        placeholder="Type the numbers..." maxlength="${testState.memoryTestLevel + 2}">
-                <button id="submit-sequence" style="background: #3498db; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-left: 10px; transition: background-color 0.3s;">Submit</button>
+                <button id="submit-sequence" class="btn btn-primary">Submit</button>
             </div>
             
-            <div id="memory-feedback" style="min-height: 30px; margin: 20px 0; font-size: 18px; font-weight: bold;"></div>
+            <div id="memory-feedback" class="sequence-feedback"></div>
             
-            <div id="memory-progress" style="margin: 30px auto; padding: 20px; background: #f8f9fa; border-radius: 8px; max-width: 300px;">
+            <div id="memory-progress" class="sequence-progress">
                 <p><strong>Round:</strong> <span id="memory-round">1</span>/<span id="memory-total-rounds">10-14</span></p>
                 <p><strong>Level:</strong> <span id="memory-level">1</span></p>
                 <p><strong>Score:</strong> <span id="memory-score">0</span></p>
@@ -1034,9 +1034,9 @@ function showNextDelayedCategoryPrompt() {
     container.innerHTML = `
         <div class="cued-item">
             <p>What ${currentCategory === 'animal' ? 'animals' : `${currentCategory}s`} do you remember? (Enter each word on a new line)</p>
-            <div id="delayed-cued-feedback" style="margin: 5px 0; font-weight: bold;"></div>
+            <div id="delayed-cued-feedback" class="cued-feedback"></div>
             <textarea id="delayed-cued-input" placeholder="Enter words, one per line..." rows="4"></textarea>
-            <button id="delayed-cued-submit">Submit</button>
+            <button id="delayed-cued-submit" class="btn btn-primary">Submit</button>
         </div>
     `;
     
@@ -1093,37 +1093,38 @@ function finishTest() {
     const delayedCuedScore = testState.results.delayedCued.length;
     
     testArea.innerHTML = `
-        <div class="results-display">
-            <h2>Test Complete!</h2>
+        <div class="results-display panel">
+            <h2 class="screen-title">Test complete</h2>
             <div class="results-user-id">
-                <span><strong>Participant ID:</strong> <span id="results-user-id">${testState.userId || ''}</span></span>
+                <span class="results-user-id__label">Participant ID:</span>
+                <span id="results-user-id" class="results-user-id__value">${testState.userId || ''}</span>
                 <button id="copy-user-id" class="btn btn-secondary" type="button">Copy ID</button>
             </div>
             <div class="results-summary">
-                <h3>Results Summary</h3>
-                <p><strong>Test Duration:</strong> ${duration} minutes</p>
-                <p><strong>Total Words:</strong> ${totalWords}</p>
+                <h3>Results summary</h3>
+                <p><strong>Test duration:</strong> ${duration} minutes</p>
+                <p><strong>Total words:</strong> ${totalWords}</p>
                 
-                <h4>Immediate Recall (3 trials)</h4>
-                <p><strong>Free Recall Scores:</strong> ${freeRecallScores.join(', ')} / ${totalWords}</p>
-                <p><strong>Total Cued Recall:</strong> ${cuedRecallScores.reduce((a, b) => a + b, 0)} words</p>
+                <h4>Immediate recall (3 trials)</h4>
+                <p><strong>Free recall scores:</strong> ${freeRecallScores.join(', ')} / ${totalWords}</p>
+                <p><strong>Total cued recall:</strong> ${cuedRecallScores.reduce((a, b) => a + b, 0)} words</p>
                 
-                <h4>Delayed Recall</h4>
-                <p><strong>Delayed Free Recall:</strong> ${delayedFreeScore} / ${totalWords}</p>
-                <p><strong>Delayed Cued Recall:</strong> ${delayedCuedScore} words</p>
+                <h4>Delayed recall</h4>
+                <p><strong>Delayed free recall:</strong> ${delayedFreeScore} / ${totalWords}</p>
+                <p><strong>Delayed cued recall:</strong> ${delayedCuedScore} words</p>
                 
-                <h4>Total Recall Score</h4>
-                <p><strong>Best Free Recall:</strong> ${Math.max(...freeRecallScores)} / ${totalWords}</p>
-                <p><strong>Total Recall (Free + Cued):</strong> ${Math.max(...freeRecallScores) + Math.max(...cuedRecallScores)} / ${totalWords}</p>
+                <h4>Total recall score</h4>
+                <p><strong>Best free recall:</strong> ${Math.max(...freeRecallScores)} / ${totalWords}</p>
+                <p><strong>Total recall (free + cued):</strong> ${Math.max(...freeRecallScores) + Math.max(...cuedRecallScores)} / ${totalWords}</p>
             </div>
             
-            <div id="upload-status" style="margin: 30px 0; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
-                <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">⏳ Uploading Results...</p>
-                <p style="color: #856404;">Please do not close this page until upload is complete.</p>
+            <div id="upload-status" class="upload-status upload-status--pending">
+                <p class="upload-status__title">⏳ Uploading results...</p>
+                <p class="upload-status__hint">Please do not close this page until upload is complete.</p>
             </div>
             
-            <div id="action-buttons" style="display: none; text-align: center; margin-top: 20px;">
-                <button id="restart-test" style="background: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">Take Test Again</button>
+            <div id="action-buttons" class="results-actions" style="display: none;">
+                <button id="restart-test" class="btn btn-success">Take test again</button>
             </div>
         </div>
     `;
@@ -1274,11 +1275,11 @@ function showUploadSuccess() {
     const uploadStatus = document.getElementById('upload-status');
     if (uploadStatus) {
         uploadStatus.innerHTML = `
-            <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #27ae60;">✓ Results Uploaded Successfully!</p>
-            <p style="color: #155724;">Thank you for completing the test. Your data has been saved.</p>
+            <p class="upload-status__title upload-status__title--success">✓ Results uploaded successfully!</p>
+            <p class="upload-status__hint upload-status__hint--success">Thank you for completing the test. Your data has been saved.</p>
         `;
-        uploadStatus.style.background = '#d4edda';
-        uploadStatus.style.borderColor = '#27ae60';
+        uploadStatus.classList.remove('upload-status--pending');
+        uploadStatus.classList.add('upload-status--success');
     }
     
     // Show restart button
@@ -1293,14 +1294,14 @@ function showUploadFailure() {
     const uploadStatus = document.getElementById('upload-status');
     if (uploadStatus) {
         uploadStatus.innerHTML = `
-            <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #e74c3c;">✗ Upload Failed</p>
-            <p style="color: #721c24; margin-bottom: 15px;">We couldn't upload your results automatically. Please download them and email to:</p>
-            <p style="font-weight: bold; color: #721c24; margin-bottom: 15px;">fcsrt.data@example.com</p>
-            <p style="color: #721c24; margin-bottom: 15px;">Subject line: <strong>Failed Data Upload</strong></p>
-            <button id="download-results" style="background: #e74c3c; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Download Results</button>
+            <p class="upload-status__title upload-status__title--error">✗ Upload failed</p>
+            <p class="upload-status__hint upload-status__hint--error">We couldn't upload your results automatically. Please download them and email to:</p>
+            <p class="upload-status__hint upload-status__hint--error"><strong>fcsrt.data@example.com</strong></p>
+            <p class="upload-status__hint upload-status__hint--error">Subject line: <strong>Failed Data Upload</strong></p>
+            <button id="download-results" class="btn btn-secondary">Download results</button>
         `;
-        uploadStatus.style.background = '#f8d7da';
-        uploadStatus.style.borderColor = '#e74c3c';
+        uploadStatus.classList.remove('upload-status--pending');
+        uploadStatus.classList.add('upload-status--error');
         
         // Attach download handler
         document.getElementById('download-results').onclick = downloadResults;

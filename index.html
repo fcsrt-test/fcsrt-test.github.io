@@ -7,60 +7,67 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <div id="persistent-user-id" class="user-id-banner" style="display:none;"></div>
-        <div id="welcome-screen" style="text-align:center; max-width:800px; margin:0 auto; font-family:Arial,sans-serif;">
-          <h1>Memory Test</h1>
-          <div class="instructions">
-            <h2>What to expect</h2>
-            <p><strong>Learn words:</strong> You will see words labeled by category (e.g., animal or furniture). Try to remember them.</p>
-            <p><strong>Memory challenge:</strong> A short number-sequence game to reset your short-term memory.</p>
-            <p><strong>Recall words:</strong> You will be asked to recall the words you studied.</p>
-            <p><strong>Category cues:</strong> If needed, we will provide the category as a hint.</p>
-            
-            <h3>Tips</h3>
-            <p>Take your time. It’s okay if you don’t remember everything. Try your best.</p>
-            
-            <p>This test takes about 15–20 minutes.</p>
-          </div>
-          <button id="begin-test" class="btn btn-primary" style="margin-top:20px; padding:10px 30px; font-size:1.1em;">I’m ready to begin</button>
-        </div>
-        <div id="returning-user-screen" style="display:none;">
+    <div class="app-shell">
+        <div id="persistent-user-id" class="app-banner user-id-banner" style="display:none;"></div>
+
+        <section id="welcome-screen" class="panel screen screen--welcome">
+            <h1 class="screen-title">Memory Test</h1>
+            <div class="screen-copy">
+                <h2>What to expect</h2>
+                <ul class="bullet-list">
+                    <li><strong>Learn words:</strong> You will see words grouped by category. Try to remember them.</li>
+                    <li><strong>Memory challenge:</strong> A short number-sequence game helps reset your short-term memory.</li>
+                    <li><strong>Recall words:</strong> You will be asked to recall the words you studied.</li>
+                    <li><strong>Category cues:</strong> If needed, we will provide the category as a hint.</li>
+                </ul>
+                <h3>Tips</h3>
+                <p class="muted-text">Take your time. It’s okay if you don’t remember everything—just do your best.</p>
+                <p class="muted-text">This test takes about 15–20 minutes.</p>
+            </div>
+            <button id="begin-test" class="btn btn-primary btn-lg">I’m ready to begin</button>
+        </section>
+
+        <section id="returning-user-screen" class="panel screen" style="display:none;">
             <button id="back-to-welcome" class="back-arrow" aria-label="Back">←</button>
-            <h2>Welcome back</h2>
-            <p>Have you taken this test before?</p>
-            <button id="yes-returning" class="btn btn-primary">Yes</button>
-            <button id="no-returning" class="btn btn-secondary">No</button>
-        </div>
+            <h2 class="screen-title">Welcome back</h2>
+            <p class="screen-subtitle">Have you taken this test before?</p>
+            <div class="button-row">
+                <button id="yes-returning" class="btn btn-primary">Yes</button>
+                <button id="no-returning" class="btn btn-secondary">No</button>
+            </div>
+        </section>
         
-        <div id="user-id-screen" style="display:none;">
+        <section id="user-id-screen" class="panel screen" style="display:none;">
             <button id="back-to-returning-user" class="back-arrow" aria-label="Back">←</button>
-            <h2>Enter your participant ID</h2>
-            <input type="text" id="user-id-input" placeholder="Your User ID">
-            <button id="submit-user-id" class="btn btn-primary">Submit</button>
-            <p id="user-id-message"></p>
-        </div>
+            <h2 class="screen-title">Enter your participant ID</h2>
+            <div class="form-field">
+                <label class="form-label" for="user-id-input">Participant ID</label>
+                <input type="text" id="user-id-input" class="input" placeholder="e.g., JD-1985-A1B2-0314">
+            </div>
+            <button id="submit-user-id" class="btn btn-primary">Continue</button>
+            <p id="user-id-message" class="form-message"></p>
+        </section>
         
-        <div id="demographics-screen" style="display: none;">
+        <section id="demographics-screen" class="panel screen" style="display:none;">
             <button id="back-to-returning-from-demo" class="back-arrow" aria-label="Back">←</button>
-            <h1>Participant Information</h1>
-            <p>Please provide the following information. All data is anonymous and used only for research purposes.</p>
+            <h1 class="screen-title">Participant information</h1>
+            <p class="screen-subtitle">Please provide the following information. All data is anonymous and used only for research.</p>
             
-            <form id="demographics-form">
+            <form id="demographics-form" class="form">
                 <div class="form-group">
-                    <label for="initials">Initials (2-3 letters):</label>
-                    <input type="text" id="initials" maxlength="3" pattern="[A-Za-z]{2,3}" required>
-                    <small>Example: JD for John Doe</small>
+                    <label for="initials" class="form-label">Initials (2–3 letters)</label>
+                    <input type="text" id="initials" maxlength="3" pattern="[A-Za-z]{2,3}" required class="input">
+                    <small class="field-hint">Example: JD for John Doe</small>
                 </div>
 
                 <div class="form-group">
-                    <label for="birth-year">Year of Birth:</label>
-                    <input type="number" id="birth-year" min="1920" max="2020" required>
+                    <label for="birth-year" class="form-label">Year of birth</label>
+                    <input type="number" id="birth-year" min="1920" max="2020" required class="input">
                 </div>
 
                 <div class="form-group">
-                    <label for="gender">Gender:</label>
-                    <select id="gender" required>
+                    <label for="gender" class="form-label">Gender</label>
+                    <select id="gender" required class="input select">
                         <option value="">Select...</option>
                         <option value="M">Male</option>
                         <option value="F">Female</option>
@@ -68,8 +75,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="education">Highest Education Level:</label>
-                    <select id="education" required>
+                    <label for="education" class="form-label">Highest education level</label>
+                    <select id="education" required class="input select">
                         <option value="">Select...</option>
                         <option value="HS">High School</option>
                         <option value="SC">Some College</option>
@@ -82,8 +89,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="native-english">Native English Speaker:</label>
-                    <select id="native-english" required>
+                    <label for="native-english" class="form-label">Native English speaker</label>
+                    <select id="native-english" required class="input select">
                         <option value="">Select...</option>
                         <option value="Y">Yes</option>
                         <option value="N">No</option>
@@ -91,36 +98,36 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="colorblind">Do you have any form of color vision deficiency (colorblindness)?</label>
-                    <select id="colorblind" required>
+                    <label for="colorblind" class="form-label">Do you have any form of color vision deficiency?</label>
+                    <select id="colorblind" required class="input select">
                         <option value="N">No, I see colors normally</option>
                         <option value="Y">Yes, I have some form of colorblindness</option>
                     </select>
-                    <small>This helps us adjust the test for better visibility.</small>
+                    <small class="field-hint">This helps us adjust the test for better visibility.</small>
                 </div>
 
-                <div class="form-group checkbox-group">
-                    <label>
+                <div class="form-group consent">
+                    <label class="checkbox-label">
                         <input type="checkbox" id="consent" required>
                         I consent to participate in this research study and understand my data will be stored anonymously.
                     </label>
                 </div>
 
-                <button type="submit" id="start-test-btn">Start Test</button>
+                <button type="submit" id="start-test-btn" class="btn btn-primary btn-block">Start test</button>
                 <p class="participant-id-display" style="display: none;">Your Participant ID: <strong id="display-user-id"></strong></p>
             </form>
-        </div>
+        </section>
         
-        <div id="test-area" style="display: none;">
+        <section id="test-area" class="panel screen" style="display: none;">
             <div class="study-progress-container">
-                <div id="study-progress">
+                <div id="study-progress" class="progress-track">
                     <div class="progress-bar"></div>
                 </div>
                 <div id="study-card" class="card-grid"></div>
             </div>
-            <div id="study-cue"></div>
-            <div id="study-grid"></div>
-        </div>
+            <div id="study-cue" class="study-cue"></div>
+            <div id="study-grid" class="study-grid"></div>
+        </section>
     </div>
     <script src="script.js"></script>
 </body>
