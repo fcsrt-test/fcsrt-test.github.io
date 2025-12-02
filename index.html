@@ -10,112 +10,134 @@
     <div class="app-shell">
         <div id="persistent-user-id" class="app-banner user-id-banner" style="display:none;"></div>
 
-        <section id="welcome-screen" class="panel screen screen--welcome">
-            <h1 class="screen-title">Memory Test</h1>
-            <div class="screen-copy">
-                <h2>What to expect</h2>
-                <ul class="bullet-list">
-                    <li><strong>Learn words:</strong> You will see words grouped by category. Try to remember them.</li>
-                    <li><strong>Memory challenge:</strong> A short number-sequence game helps reset your short-term memory.</li>
-                    <li><strong>Recall words:</strong> You will be asked to recall the words you studied.</li>
-                    <li><strong>Category cues:</strong> If needed, we will provide the category as a hint.</li>
-                </ul>
-                <h3>Tips</h3>
-                <p class="muted-text">Take your time. It’s okay if you don’t remember everything—just do your best.</p>
-                <p class="muted-text">This test takes about 15–20 minutes.</p>
+        <section id="welcome-screen" class="screen screen--centered">
+            <div class="screen__body">
+                <h1 class="screen-title screen-title--centered">Memory Test</h1>
+                <div class="screen-card">
+                    <div class="screen-copy">
+                        <h2>What to expect</h2>
+                        <ul class="bullet-list">
+                            <li><strong>Learn words:</strong> You will see words grouped by category. Try to remember them.</li>
+                            <li><strong>Memory challenge:</strong> A short number-sequence game helps reset your short-term memory.</li>
+                            <li><strong>Recall words:</strong> You will be asked to recall the words you studied.</li>
+                            <li><strong>Category cues:</strong> If needed, we will provide the category as a hint.</li>
+                        </ul>
+                        <h3>Tips</h3>
+                        <p class="muted-text">Take your time. It’s okay if you don’t remember everything—just do your best.</p>
+                        <p class="muted-text">This test takes about 15–20 minutes.</p>
+                    </div>
+                    <div class="screen-actions screen-actions--centered">
+                        <button id="begin-test" class="btn btn-primary btn-lg">I’m ready to begin</button>
+                    </div>
+                </div>
             </div>
-            <button id="begin-test" class="btn btn-primary btn-lg">I’m ready to begin</button>
         </section>
 
-        <section id="returning-user-screen" class="panel screen" style="display:none;">
-            <button id="back-to-welcome" class="back-arrow" aria-label="Back">←</button>
-            <h2 class="screen-title">Welcome back</h2>
-            <p class="screen-subtitle">Have you taken this test before?</p>
-            <div class="button-row">
-                <button id="yes-returning" class="btn btn-primary">Yes</button>
-                <button id="no-returning" class="btn btn-secondary">No</button>
+        <section id="returning-user-screen" class="screen screen--centered" style="display:none;">
+            <div class="screen__body">
+                <button id="back-to-welcome" class="back-arrow" aria-label="Back">←</button>
+                <div class="screen-card screen-card--narrow">
+                    <h2 class="screen-title screen-title--centered">Welcome back</h2>
+                    <p class="screen-subtitle screen-subtitle--centered">Have you taken this test before?</p>
+                    <div class="button-row button-row--centered">
+                        <button id="yes-returning" class="btn btn-primary">Yes</button>
+                        <button id="no-returning" class="btn btn-secondary">No</button>
+                    </div>
+                </div>
             </div>
         </section>
         
-        <section id="user-id-screen" class="panel screen" style="display:none;">
-            <button id="back-to-returning-user" class="back-arrow" aria-label="Back">←</button>
-            <h2 class="screen-title">Enter your participant ID</h2>
-            <div class="form-field">
-                <label class="form-label" for="user-id-input">Participant ID</label>
-                <input type="text" id="user-id-input" class="input" placeholder="e.g., JD-1985-A1B2-0314">
+        <section id="user-id-screen" class="screen screen--centered" style="display:none;">
+            <div class="screen__body">
+                <button id="back-to-returning-user" class="back-arrow" aria-label="Back">←</button>
+                <div class="screen-card screen-card--narrow">
+                    <h2 class="screen-title screen-title--centered">Enter your participant ID</h2>
+                    <div class="form-field">
+                        <label class="form-label" for="user-id-input">Participant ID</label>
+                        <input type="text" id="user-id-input" class="input" placeholder="e.g., JD-1985-A1B2-0314">
+                    </div>
+                    <div class="screen-actions screen-actions--centered">
+                        <button id="submit-user-id" class="btn btn-primary">Continue</button>
+                    </div>
+                    <p id="user-id-message" class="form-message"></p>
+                </div>
             </div>
-            <button id="submit-user-id" class="btn btn-primary">Continue</button>
-            <p id="user-id-message" class="form-message"></p>
         </section>
         
-        <section id="demographics-screen" class="panel screen" style="display:none;">
-            <button id="back-to-returning-from-demo" class="back-arrow" aria-label="Back">←</button>
-            <h1 class="screen-title">Participant information</h1>
-            <p class="screen-subtitle">Please provide the following information. All data is anonymous and used only for research.</p>
-            
-            <form id="demographics-form" class="form">
-                <div class="form-group">
-                    <label for="initials" class="form-label">Initials (2–3 letters)</label>
-                    <input type="text" id="initials" maxlength="3" pattern="[A-Za-z]{2,3}" required class="input">
-                    <small class="field-hint">Example: JD for John Doe</small>
-                </div>
+        <section id="demographics-screen" class="screen screen--centered" style="display:none;">
+            <div class="screen__body">
+                <button id="back-to-returning-from-demo" class="back-arrow" aria-label="Back">←</button>
+                <div class="screen-card">
+                    <h1 class="screen-title screen-title--centered">Participant information</h1>
+                    <p class="screen-subtitle screen-subtitle--centered">Please provide the following information. All data is anonymous and used only for research.</p>
+                    
+                    <form id="demographics-form" class="form">
+                        <div class="form-group">
+                            <label for="initials" class="form-label">Initials (2–3 letters)</label>
+                            <input type="text" id="initials" maxlength="3" pattern="[A-Za-z]{2,3}" required class="input">
+                            <small class="field-hint">Example: JD for John Doe</small>
+                        </div>
 
-                <div class="form-group">
-                    <label for="birth-year" class="form-label">Year of birth</label>
-                    <input type="number" id="birth-year" min="1920" max="2020" required class="input">
-                </div>
+                        <div class="form-group">
+                            <label for="birth-year" class="form-label">Year of birth</label>
+                            <input type="number" id="birth-year" min="1920" max="2020" required class="input">
+                        </div>
 
-                <div class="form-group">
-                    <label for="gender" class="form-label">Gender</label>
-                    <select id="gender" required class="input select">
-                        <option value="">Select...</option>
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
-                    </select>
-                </div>
+                        <div class="form-group">
+                            <label for="gender" class="form-label">Gender</label>
+                            <select id="gender" required class="input select">
+                                <option value="">Select...</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label for="education" class="form-label">Highest education level</label>
-                    <select id="education" required class="input select">
-                        <option value="">Select...</option>
-                        <option value="HS">High School</option>
-                        <option value="SC">Some College</option>
-                        <option value="AS">Associate's Degree</option>
-                        <option value="BA">Bachelor's Degree</option>
-                        <option value="MS">Master's Degree</option>
-                        <option value="PHD">Doctoral Degree</option>
-                        <option value="OT">Other</option>
-                    </select>
-                </div>
+                        <div class="form-group">
+                            <label for="education" class="form-label">Highest education level</label>
+                            <select id="education" required class="input select">
+                                <option value="">Select...</option>
+                                <option value="HS">High School</option>
+                                <option value="SC">Some College</option>
+                                <option value="AS">Associate's Degree</option>
+                                <option value="BA">Bachelor's Degree</option>
+                                <option value="MS">Master's Degree</option>
+                                <option value="PHD">Doctoral Degree</option>
+                                <option value="OT">Other</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label for="native-english" class="form-label">Native English speaker</label>
-                    <select id="native-english" required class="input select">
-                        <option value="">Select...</option>
-                        <option value="Y">Yes</option>
-                        <option value="N">No</option>
-                    </select>
-                </div>
+                        <div class="form-group">
+                            <label for="native-english" class="form-label">Native English speaker</label>
+                            <select id="native-english" required class="input select">
+                                <option value="">Select...</option>
+                                <option value="Y">Yes</option>
+                                <option value="N">No</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label for="colorblind" class="form-label">Do you have any form of color vision deficiency?</label>
-                    <select id="colorblind" required class="input select">
-                        <option value="N">No, I see colors normally</option>
-                        <option value="Y">Yes, I have some form of colorblindness</option>
-                    </select>
-                    <small class="field-hint">This helps us adjust the test for better visibility.</small>
-                </div>
+                        <div class="form-group">
+                            <label for="colorblind" class="form-label">Do you have any form of color vision deficiency?</label>
+                            <select id="colorblind" required class="input select">
+                                <option value="N">No, I see colors normally</option>
+                                <option value="Y">Yes, I have some form of colorblindness</option>
+                            </select>
+                            <small class="field-hint">This helps us adjust the test for better visibility.</small>
+                        </div>
 
-                <div class="form-group consent">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="consent" required>
-                        I consent to participate in this research study and understand my data will be stored anonymously.
-                    </label>
-                </div>
+                        <div class="form-group consent">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="consent" required>
+                                I consent to participate in this research study and understand my data will be stored anonymously.
+                            </label>
+                        </div>
 
-                <button type="submit" id="start-test-btn" class="btn btn-primary btn-block">Start test</button>
-                <p class="participant-id-display" style="display: none;">Your Participant ID: <strong id="display-user-id"></strong></p>
-            </form>
+                        <div class="screen-actions">
+                            <button type="submit" id="start-test-btn" class="btn btn-primary btn-block">Start test</button>
+                        </div>
+                        <p class="participant-id-display" style="display: none;">Your Participant ID: <strong id="display-user-id"></strong></p>
+                    </form>
+                </div>
+            </div>
         </section>
         
         <section id="test-area" class="screen screen--interaction" style="display: none;">

@@ -312,7 +312,7 @@ function handleDemographicsSubmit(e) {
     // Create and show user ID with Begin Test button
     const demographicsScreen = document.getElementById('demographics-screen');
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'panel panel--confirmation';
+    messageDiv.className = 'screen-card screen-card--narrow confirmation-card';
     messageDiv.innerHTML = `
         <div class="confirmation">
             <p class="confirmation__label">Your Participant ID</p>
@@ -1098,7 +1098,7 @@ function finishTest() {
     const delayedCuedScore = testState.results.delayedCued.length;
     
     testArea.innerHTML = `
-        <div class="results-display panel">
+        <div class="screen-card results-display">
             <h2 class="screen-title screen-title--centered">Test complete</h2>
             <div class="results-user-id">
                 <span class="results-user-id__label">Participant ID:</span>
