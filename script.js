@@ -405,9 +405,24 @@ function showDemographicsScreen() {
 
 async function handleUserIdSubmit() {
     const userId = document.getElementById('user-id-input').value.trim();
+    const submitButton = document.getElementById('submit-user-id');
+    const loadingIndicator = document.getElementById('user-id-loading');
+    const messageElement = document.getElementById('user-id-message');
     if (!userId) {
-        document.getElementById('user-id-message').textContent = 'Please enter your User ID';
+        if (messageElement) {
+            messageElement.textContent = 'Please enter your User ID';
+        }
         return;
+    }
+    if (messageElement) {
+        messageElement.textContent = '';
+    }
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'inline-flex';
+    }
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Checking...';
     }
     
     try {
@@ -460,11 +475,24 @@ async function handleUserIdSubmit() {
             createDevControls();
             startStudyPhase();
         } else {
-            document.getElementById('user-id-message').textContent = 'User ID not found. Please try again or take as a new participant.';
+            if (messageElement) {
+                messageElement.textContent = 'User ID not found. Please try again or take as a new participant.';
+            }
         }
     } catch (error) {
         console.error('Error checking user ID:', error);
-        document.getElementById('user-id-message').textContent = 'Error checking user ID. Please try again.';
+        if (messageElement) {
+            messageElement.textContent = 'Error checking user ID. Please try again.';
+        }
+    }
+    finally {
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Continue';
+        }
     }
 }
 

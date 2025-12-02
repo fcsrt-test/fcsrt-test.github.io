@@ -218,6 +218,29 @@ body {
     text-align: center;
 }
 
+.loading-indicator {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.loading-indicator__spinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid rgba(59, 109, 240, 0.25);
+    border-top-color: var(--color-accent);
+    animation: spin 0.9s linear infinite;
+}
+
+.loading-indicator__text {
+    letter-spacing: 0.01em;
+}
+
 .checkbox-label {
     display: flex;
     gap: 12px;
