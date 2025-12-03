@@ -865,11 +865,16 @@ function startNewRound() {
     testState.currentSequence = sequence;
     const display = document.getElementById('number-display');
     const input = document.getElementById('number-input');
+    const feedback = document.getElementById('memory-feedback');
     
     // Show sequence
     display.textContent = sequence;
     input.value = '';
     input.maxLength = length;
+    if (feedback) {
+        feedback.textContent = '';
+        feedback.style.color = '';
+    }
     
     // Hide input while showing sequence
     document.getElementById('input-container').style.display = 'none';
