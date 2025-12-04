@@ -326,25 +326,43 @@ function handleDemographicsSubmit(e) {
     // Reinitialize word sets with the correct word bank
     initializeWordSets();
     
-    // Hide the form
-    document.getElementById('demographics-form').style.display = 'none';
-    
-    // Create and show user ID with Begin Test button
+    // Hide the form and primary demographics card content
+    const demographicsForm = document.getElementById('demographics-form');
+    if (demographicsForm) {
+        demographicsForm.style.display = 'none';
+    }
+
     const demographicsScreen = document.getElementById('demographics-screen');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'screen-card screen-card--narrow confirmation-card';
-    messageDiv.innerHTML = `
-        <div class="confirmation">
-            <p class="confirmation__label">Your Participant ID</p>
-            <p class="confirmation__value">${testState.userId}</p>
-            <p class="confirmation__hint">Please save this ID for future sessions.</p>
-        </div>
-        <button id="begin-test-button" class="btn btn-primary btn-block">Begin test</button>
-    `;
-    demographicsScreen.appendChild(messageDiv);
-    
-    // Add event listener to the Begin Test button
-    document.getElementById('begin-test-button').addEventListener('click', startTest);
+    const screenBody = demographicsScreen ? demographicsScreen.querySelector('.screen__body') : null;
+    if (screenBody) {
+        const originalCard = screenBody.querySelector('.screen-card');
+        if (originalCard) {
+            originalCard.style.display = 'none';
+        }
+
+        const backButton = demographicsScreen.querySelector('.back-arrow');
+        if (backButton) {
+            backButton.style.display = 'none';
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'screen-card screen-card--narrow confirmation-card';
+        messageDiv.innerHTML = `
+            <div class="confirmation">
+                <p class="confirmation__label">Your Participant ID</p>
+                <p class="confirmation__value">${testState.userId}</p>
+                <p class="confirmation__hint">Please save this ID for future sessions.</p>
+            </div>
+            <button id="begin-test-button" class="btn btn-primary btn-block">Begin test</button>
+        `;
+        screenBody.appendChild(messageDiv);
+
+        const beginTestButton = messageDiv.querySelector('#begin-test-button');
+        if (beginTestButton) {
+            beginTestButton.addEventListener('click', startTest);
+        }
+    }
+
     updateParticipantIdDisplay();
 }
 
