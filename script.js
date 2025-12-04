@@ -1280,6 +1280,8 @@ function downloadResults() {
 }
 
 function uploadResults() {
+    showUploadPending();
+
     // Prepare data for upload - stringify complex data for Apps Script
     const data = {
         userId: testState.userId,
@@ -1332,6 +1334,18 @@ function uploadResults() {
     });
 }
 
+function showUploadPending() {
+    const uploadStatus = document.getElementById('upload-status');
+    if (uploadStatus) {
+        uploadStatus.innerHTML = `
+            <p class="upload-status__title">⏳ Uploading results...</p>
+            <p class="upload-status__hint">Please do not close this page until upload is complete.</p>
+        `;
+        uploadStatus.classList.remove('upload-status--error', 'upload-status--success');
+        uploadStatus.classList.add('upload-status--pending');
+    }
+}
+
 function showUploadSuccess() {
     const uploadStatus = document.getElementById('upload-status');
     if (uploadStatus) {
@@ -1339,7 +1353,7 @@ function showUploadSuccess() {
             <p class="upload-status__title upload-status__title--success">✓ Results uploaded successfully!</p>
             <p class="upload-status__hint upload-status__hint--success">Thank you for completing the test. Your data has been saved.</p>
         `;
-        uploadStatus.classList.remove('upload-status--pending');
+        uploadStatus.classList.remove('upload-status--pending', 'upload-status--error');
         uploadStatus.classList.add('upload-status--success');
     }
     
@@ -1359,13 +1373,23 @@ function showUploadFailure() {
             <p class="upload-status__hint upload-status__hint--error">We couldn't upload your results automatically. Please download them and email to:</p>
             <p class="upload-status__hint upload-status__hint--error"><strong>fcsrt.data@example.com</strong></p>
             <p class="upload-status__hint upload-status__hint--error">Subject line: <strong>Failed Data Upload</strong></p>
+            <button id="retry-upload" class="btn btn-primary">Retry upload</button>
             <button id="download-results" class="btn btn-secondary">Download results</button>
         `;
-        uploadStatus.classList.remove('upload-status--pending');
+        uploadStatus.classList.remove('upload-status--pending', 'upload-status--success');
         uploadStatus.classList.add('upload-status--error');
         
         // Attach download handler
         document.getElementById('download-results').onclick = downloadResults;
+
+        const retryButton = document.getElementById('retry-upload');
+        if (retryButton) {
+            retryButton.onclick = () => {
+                retryButton.disabled = true;
+                showUploadPending();
+                uploadResults();
+            };
+        }
     }
     
     // Show restart button
