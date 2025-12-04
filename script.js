@@ -18,6 +18,26 @@ function showWelcomeScreen() {
     showOnly('welcome-screen');
 }
 
+function attachSpaceToNewlineHandler(elementId) {
+    const input = document.getElementById(elementId);
+    if (!input || input.dataset.spaceHandlerAttached === 'true') {
+        return;
+    }
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === ' ' || event.key === 'Spacebar' || event.code === 'Space') {
+            event.preventDefault();
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? input.value.length;
+            const value = input.value;
+            input.value = `${value.slice(0, start)}\n${value.slice(end)}`;
+            input.selectionStart = input.selectionEnd = start + 1;
+        }
+    });
+
+    input.dataset.spaceHandlerAttached = 'true';
+}
+
 function updateParticipantIdDisplay() {
     const persistentBanner = document.getElementById('persistent-user-id');
     const resultsId = document.getElementById('results-user-id');
@@ -640,6 +660,7 @@ function showRecallInterface() {
             </div>
         `;
         
+        attachSpaceToNewlineHandler('recall-input');
         document.getElementById('recall-submit').onclick = submitFreeRecall;
         
         // Record the start time for this free recall trial
@@ -751,6 +772,7 @@ function showNextCategoryPrompt() {
     `;
     
     document.getElementById('cued-input').focus();
+    attachSpaceToNewlineHandler('cued-input');
     document.getElementById('cued-submit').onclick = () => submitCategoryAnswer(currentCategory, missedInCategory);
     
     // Allow Ctrl+Enter to submit
@@ -974,6 +996,7 @@ function startDelayedRecall() {
         </div>
     `;
     
+    attachSpaceToNewlineHandler('delayed-recall-input');
     document.getElementById('delayed-recall-submit').onclick = submitDelayedFreeRecall;
     
     // Record the start time for delayed free recall
